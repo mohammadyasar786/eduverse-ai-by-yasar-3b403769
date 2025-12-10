@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,13 +6,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Navigation from "@/components/Navigation";
 import { Brain, Send, Sparkles, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+
 const AITutor = () => {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -21,38 +28,123 @@ const AITutor = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Please sign in to use the AI Tutor");
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    const userMsg: Message = { role: "user", content: userMessage };
+    setMessages(prev => [...prev, userMsg]);
     setIsLoading(true);
 
+    let assistantContent = "";
+
     try {
-      // TODO: Implement AI chat with Lovable AI
-      // For now, showing placeholder response
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: "I understand you're asking about that topic! Let me help you break it down step by step. (AI integration will be added in the next step)"
-        }]);
-        setIsLoading(false);
-      }, 1000);
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ 
+          messages: [...messages.slice(1), userMsg].map(m => ({ role: m.role, content: m.content }))
+        }),
+      });
+
+      if (!resp.ok || !resp.body) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+
+      // Add assistant message placeholder
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1] = { role: "assistant", content: assistantContent };
+                return newMessages;
+              });
+            }
+          } catch {
+            // Incomplete JSON, wait for more data
+          }
+        }
+      }
+
+      // Save to database
+      if (user) {
+        await supabase.from("chat_messages").insert([
+          { user_id: user.id, role: "user", content: userMessage },
+          { user_id: user.id, role: "assistant", content: assistantContent }
+        ]);
+      }
+
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to get response. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to get response");
+      // Remove the empty assistant message on error
+      setMessages(prev => prev.filter((_, i) => i !== prev.length - 1));
+    } finally {
       setIsLoading(false);
     }
   };
 
   const quickTopics = [
-    { icon: "🔬", label: "Science", topic: "Explain photosynthesis" },
-    { icon: "📐", label: "Math", topic: "Help with algebra" },
+    { icon: "🔬", label: "Science", topic: "Explain photosynthesis in simple terms" },
+    { icon: "📐", label: "Math", topic: "Help me understand quadratic equations" },
     { icon: "🌍", label: "History", topic: "Tell me about ancient civilizations" },
-    { icon: "💻", label: "Coding", topic: "Teach me Python basics" }
+    { icon: "💻", label: "Coding", topic: "Teach me Python basics step by step" }
   ];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,9 +178,7 @@ const AITutor = () => {
                   key={index}
                   variant="outline"
                   className="h-auto py-4 flex-col gap-2 hover:border-primary/50 hover:bg-primary/5"
-                  onClick={() => {
-                    setInput(topic.topic);
-                  }}
+                  onClick={() => setInput(topic.topic)}
                 >
                   <span className="text-2xl">{topic.icon}</span>
                   <span className="text-sm">{topic.label}</span>
@@ -100,7 +190,7 @@ const AITutor = () => {
 
         {/* Chat Interface */}
         <Card className="shadow-elevation border-2">
-          <ScrollArea className="h-[500px] p-6">
+          <ScrollArea className="h-[500px] p-6" ref={scrollRef}>
             <div className="space-y-4">
               {messages.map((message, index) => (
                 <div
@@ -130,7 +220,7 @@ const AITutor = () => {
                   )}
                 </div>
               ))}
-              {isLoading && (
+              {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
                 <div className="flex gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-primary">
                     <Sparkles className="h-4 w-4 text-primary-foreground animate-pulse" />

@@ -1,22 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
-import { Code, Mic, Play, Copy, Check } from "lucide-react";
+import { Code, Mic, Play, Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Talk2Code = () => {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Please sign in to use Talk2Code");
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   const exampleInstructions = [
-    "Create a function that sorts a list of numbers",
-    "Write a loop to print numbers 1 to 10",
-    "Make a function to calculate factorial",
-    "Create a class for a student with name and grades"
+    "Create a function that sorts a list of numbers using bubble sort",
+    "Write a loop to print the Fibonacci sequence up to 10 terms",
+    "Make a function to calculate factorial recursively",
+    "Create a class for a student with name, age, and grades with methods to calculate average"
   ];
 
   const handleCopy = () => {
@@ -26,25 +39,51 @@ const Talk2Code = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleGenerate = () => {
-    // Placeholder - will be implemented with AI
-    const placeholder = `# Generated Python code based on: "${instruction}"
-
-def example_function():
-    """
-    This is a placeholder function.
-    Real code generation will be implemented with AI integration.
-    """
-    print("Hello from Talk2Code!")
-    return True
-
-# Call the function
-result = example_function()
-print(f"Function returned: {result}")`;
+  const handleGenerate = async () => {
+    if (!instruction.trim()) return;
     
-    setGeneratedCode(placeholder);
-    toast.success("Code generated! (Demo mode)");
+    setIsGenerating(true);
+    setGeneratedCode("");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-code", {
+        body: { instruction: instruction.trim(), language: "python" }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      setGeneratedCode(data.generatedCode);
+      toast.success("Code generated successfully!");
+
+      // Save to database
+      if (user) {
+        await supabase.from("code_generations").insert({
+          user_id: user.id,
+          instruction: instruction.trim(),
+          generated_code: data.generatedCode,
+          language: "python"
+        });
+      }
+    } catch (error) {
+      console.error("Error generating code:", error);
+      toast.error("Failed to generate code. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,7 +130,7 @@ print(f"Function returned: {result}")`;
                     className={`absolute bottom-2 right-2 ${isRecording ? "gradient-accent text-accent-foreground animate-pulse" : ""}`}
                     onClick={() => {
                       setIsRecording(!isRecording);
-                      toast.info(isRecording ? "Recording stopped" : "Recording started (demo)");
+                      toast.info(isRecording ? "Recording stopped" : "Voice recording coming soon!");
                     }}
                   >
                     <Mic className="h-4 w-4" />
@@ -101,10 +140,19 @@ print(f"Function returned: {result}")`;
                 <Button
                   className="w-full gradient-accent text-accent-foreground shadow-accent"
                   onClick={handleGenerate}
-                  disabled={!instruction.trim()}
+                  disabled={!instruction.trim() || isGenerating}
                 >
-                  <Play className="h-4 w-4 mr-2" />
-                  Generate Code
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Generate Code
+                    </>
+                  )}
                 </Button>
               </div>
             </Card>
@@ -157,8 +205,15 @@ print(f"Function returned: {result}")`;
                 )}
               </div>
 
-              {generatedCode ? (
-                <div className="rounded-lg bg-muted p-4 font-mono text-sm overflow-x-auto">
+              {isGenerating ? (
+                <div className="text-center py-16">
+                  <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    AI is writing your code...
+                  </p>
+                </div>
+              ) : generatedCode ? (
+                <div className="rounded-lg bg-muted p-4 font-mono text-sm overflow-x-auto max-h-[400px] overflow-y-auto">
                   <pre className="whitespace-pre-wrap">{generatedCode}</pre>
                 </div>
               ) : (

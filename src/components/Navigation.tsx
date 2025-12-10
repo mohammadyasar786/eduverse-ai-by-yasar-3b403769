@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles } from "lucide-react";
+import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4">
@@ -49,9 +52,22 @@ const Navigation = () => {
             </Button>
           </div>
 
-          <Button size="sm" className="gradient-primary text-primary-foreground shadow-primary hover:opacity-90 transition-opacity">
-            Get Started
-          </Button>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                <User className="h-4 w-4 inline mr-1" />
+                {user.email?.split("@")[0]}
+              </span>
+              <Button size="sm" variant="outline" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" className="gradient-primary text-primary-foreground shadow-primary" asChild>
+              <Link to="/auth">Get Started</Link>
+            </Button>
+          )}
         </div>
       </div>
     </nav>
