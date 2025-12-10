@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      code_generations: {
+        Row: {
+          created_at: string
+          generated_code: string
+          id: string
+          instruction: string
+          language: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_code: string
+          id?: string
+          instruction: string
+          language?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_code?: string
+          id?: string
+          instruction?: string
+          language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      focus_sessions: {
+        Row: {
+          duration_minutes: number | null
+          ended_at: string | null
+          energy: number | null
+          engagement: number | null
+          focus_level: number | null
+          id: string
+          started_at: string
+          user_id: string
+          wellbeing: number | null
+        }
+        Insert: {
+          duration_minutes?: number | null
+          ended_at?: string | null
+          energy?: number | null
+          engagement?: number | null
+          focus_level?: number | null
+          id?: string
+          started_at?: string
+          user_id: string
+          wellbeing?: number | null
+        }
+        Update: {
+          duration_minutes?: number | null
+          ended_at?: string | null
+          energy?: number | null
+          engagement?: number | null
+          focus_level?: number | null
+          id?: string
+          started_at?: string
+          user_id?: string
+          wellbeing?: number | null
+        }
+        Relationships: []
+      }
+      learning_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          module: string
+          progress: number
+          status: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module: string
+          progress?: number
+          status?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module?: string
+          progress?: number
+          status?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
