@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, User } from "lucide-react";
+import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, User, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
@@ -54,13 +54,15 @@ const Navigation = () => {
 
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground hidden sm:block">
-                <User className="h-4 w-4 inline mr-1" />
-                {user.email?.split("@")[0]}
-              </span>
+              <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-primary hover:bg-primary/5">
+                <Link to="/dashboard" className="flex items-center gap-2">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              </Button>
               <Button size="sm" variant="outline" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           ) : (

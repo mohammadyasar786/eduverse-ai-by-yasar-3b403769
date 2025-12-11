@@ -10,6 +10,7 @@ import ARLearning from "./pages/ARLearning";
 import MindPulse from "./pages/MindPulse";
 import Talk2Code from "./pages/Talk2Code";
 import LearnFlow from "./pages/LearnFlow";
+import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tutor" element={<AITutor />} />
             <Route path="/ar-learning" element={<ARLearning />} />
             <Route path="/mindpulse" element={<MindPulse />} />

@@ -3,20 +3,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
-import { Code, Mic, Play, Copy, Check, Loader2 } from "lucide-react";
+import { Code, Mic, MicOff, Play, Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 const Talk2Code = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [isRecording, setIsRecording] = useState(false);
   const [instruction, setInstruction] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const { isRecording, isProcessing, toggleRecording } = useVoiceInput({
+    onTranscript: (text) => {
+      setInstruction((prev) => (prev ? prev + " " + text : text));
+    },
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -126,15 +132,23 @@ const Talk2Code = () => {
                   />
                   <Button
                     size="icon"
-                    variant="ghost"
-                    className={`absolute bottom-2 right-2 ${isRecording ? "gradient-accent text-accent-foreground animate-pulse" : ""}`}
-                    onClick={() => {
-                      setIsRecording(!isRecording);
-                      toast.info(isRecording ? "Recording stopped" : "Voice recording coming soon!");
-                    }}
+                    variant={isRecording ? "destructive" : "ghost"}
+                    className={`absolute bottom-2 right-2 ${isRecording ? "animate-pulse" : ""}`}
+                    onClick={toggleRecording}
+                    disabled={isProcessing}
                   >
-                    <Mic className="h-4 w-4" />
+                    {isRecording ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
                   </Button>
+                  {isRecording && (
+                    <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-destructive font-medium">
+                      <span className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                      Recording...
+                    </div>
+                  )}
                 </div>
 
                 <Button
