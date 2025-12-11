@@ -4,11 +4,12 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Navigation from "@/components/Navigation";
-import { Brain, Send, Sparkles, BookOpen } from "lucide-react";
+import { Brain, Send, Sparkles, BookOpen, Volume2, VolumeX, Square } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,6 +21,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const AITutor = () => {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { speak, stop, isSpeaking } = useTextToSpeech();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -28,7 +30,26 @@ const AITutor = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [speakingMessageIndex, setSpeakingMessageIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleSpeak = (content: string, index: number) => {
+    if (isSpeaking && speakingMessageIndex === index) {
+      stop();
+      setSpeakingMessageIndex(null);
+    } else {
+      stop();
+      speak(content);
+      setSpeakingMessageIndex(index);
+    }
+  };
+
+  // Reset speaking state when speech ends
+  useEffect(() => {
+    if (!isSpeaking) {
+      setSpeakingMessageIndex(null);
+    }
+  }, [isSpeaking]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -202,16 +223,38 @@ const AITutor = () => {
                       <Sparkles className="h-4 w-4 text-primary-foreground" />
                     </div>
                   )}
-                  <div
-                    className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-                      message.role === "user"
-                        ? "gradient-primary text-primary-foreground shadow-primary"
-                        : "bg-muted"
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </p>
+                  <div className="flex flex-col gap-1 max-w-[80%]">
+                    <div
+                      className={`rounded-2xl px-4 py-3 ${
+                        message.role === "user"
+                          ? "gradient-primary text-primary-foreground shadow-primary"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {message.content}
+                      </p>
+                    </div>
+                    {message.role === "assistant" && message.content && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="self-start h-7 px-2 text-xs text-muted-foreground hover:text-primary"
+                        onClick={() => handleSpeak(message.content, index)}
+                      >
+                        {isSpeaking && speakingMessageIndex === index ? (
+                          <>
+                            <Square className="h-3 w-3 mr-1" />
+                            Stop
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="h-3 w-3 mr-1" />
+                            Listen
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                   {message.role === "user" && (
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
