@@ -9,60 +9,57 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
-
 const Talk2Code = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const {
+    user,
+    isLoading: authLoading
+  } = useAuth();
   const navigate = useNavigate();
   const [instruction, setInstruction] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  const { isRecording, isProcessing, toggleRecording } = useVoiceInput({
-    onTranscript: (text) => {
-      setInstruction((prev) => (prev ? prev + " " + text : text));
-    },
+  const {
+    isRecording,
+    isProcessing,
+    toggleRecording
+  } = useVoiceInput({
+    onTranscript: text => {
+      setInstruction(prev => prev ? prev + " " + text : text);
+    }
   });
-
   useEffect(() => {
     if (!authLoading && !user) {
       toast.error("Please sign in to use Talk2Code");
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
-
-  const exampleInstructions = [
-    "Create a function that sorts a list of numbers using bubble sort",
-    "Write a loop to print the Fibonacci sequence up to 10 terms",
-    "Make a function to calculate factorial recursively",
-    "Create a class for a student with name, age, and grades with methods to calculate average"
-  ];
-
+  const exampleInstructions = ["Create a function that sorts a list of numbers using bubble sort", "Write a loop to print the Fibonacci sequence up to 10 terms", "Make a function to calculate factorial recursively", "Create a class for a student with name, age, and grades with methods to calculate average"];
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedCode);
     setCopied(true);
     toast.success("Code copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
-
   const handleGenerate = async () => {
     if (!instruction.trim()) return;
-    
     setIsGenerating(true);
     setGeneratedCode("");
-
     try {
-      const { data, error } = await supabase.functions.invoke("generate-code", {
-        body: { instruction: instruction.trim(), language: "python" }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke("generate-code", {
+        body: {
+          instruction: instruction.trim(),
+          language: "python"
+        }
       });
-
       if (error) throw error;
-
       if (data.error) {
         toast.error(data.error);
         return;
       }
-
       setGeneratedCode(data.generatedCode);
       toast.success("Code generated successfully!");
 
@@ -82,17 +79,12 @@ const Talk2Code = () => {
       setIsGenerating(false);
     }
   };
-
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="pt-20 pb-8 px-4 container mx-auto max-w-6xl">
@@ -116,7 +108,7 @@ const Talk2Code = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Input Section */}
           <div className="space-y-6">
-            <Card className="p-6 border-2">
+            <Card className="p-6 border-2 rounded-3xl">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Mic className="h-5 w-5 text-accent" />
                 Your Instructions
@@ -124,124 +116,75 @@ const Talk2Code = () => {
               
               <div className="space-y-4">
                 <div className="relative">
-                  <Textarea
-                    value={instruction}
-                    onChange={(e) => setInstruction(e.target.value)}
-                    placeholder="Describe what you want to code... (e.g., 'Create a function that reverses a string')"
-                    className="min-h-[150px] resize-none"
-                  />
-                  <Button
-                    size="icon"
-                    variant={isRecording ? "destructive" : "ghost"}
-                    className={`absolute bottom-2 right-2 ${isRecording ? "animate-pulse" : ""}`}
-                    onClick={toggleRecording}
-                    disabled={isProcessing}
-                  >
-                    {isRecording ? (
-                      <MicOff className="h-4 w-4" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
+                  <Textarea value={instruction} onChange={e => setInstruction(e.target.value)} placeholder="Describe what you want to code... (e.g., 'Create a function that reverses a string')" className="min-h-[150px] resize-none" />
+                  <Button size="icon" variant={isRecording ? "destructive" : "ghost"} className={`absolute bottom-2 right-2 ${isRecording ? "animate-pulse" : ""}`} onClick={toggleRecording} disabled={isProcessing}>
+                    {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                   </Button>
-                  {isRecording && (
-                    <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-destructive font-medium">
+                  {isRecording && <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-destructive font-medium">
                       <span className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
                       Recording...
-                    </div>
-                  )}
+                    </div>}
                 </div>
 
-                <Button
-                  className="w-full gradient-accent text-accent-foreground shadow-accent"
-                  onClick={handleGenerate}
-                  disabled={!instruction.trim() || isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
+                <Button onClick={handleGenerate} disabled={!instruction.trim() || isGenerating} className="w-full gradient-accent text-accent-foreground shadow-accent rounded-full">
+                  {isGenerating ? <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Generating...
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <Play className="h-4 w-4 mr-2" />
                       Generate Code
-                    </>
-                  )}
+                    </>}
                 </Button>
               </div>
             </Card>
 
             {/* Example Instructions */}
-            <Card className="p-6 border-2">
+            <Card className="p-6 border-2 rounded-3xl">
               <h3 className="font-semibold mb-3 text-sm text-muted-foreground">Try these examples:</h3>
               <div className="space-y-2">
-                {exampleInstructions.map((example, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto py-3 px-4 hover:border-accent/50 hover:bg-accent/5"
-                    onClick={() => setInstruction(example)}
-                  >
+                {exampleInstructions.map((example, index) => <Button key={index} variant="outline" onClick={() => setInstruction(example)} className="w-full justify-start text-left h-auto py-3 px-4 hover:border-accent/50 hover:bg-accent/5 rounded-3xl">
                     <span className="text-sm">{example}</span>
-                  </Button>
-                ))}
+                  </Button>)}
               </div>
             </Card>
           </div>
 
           {/* Output Section */}
           <div className="space-y-6">
-            <Card className="p-6 border-2">
+            <Card className="p-6 border-2 rounded-3xl">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
                   <Code className="h-5 w-5 text-primary" />
                   Generated Code
                 </h2>
-                {generatedCode && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopy}
-                    className="hover:bg-primary/5"
-                  >
-                    {copied ? (
-                      <>
+                {generatedCode && <Button size="sm" variant="ghost" onClick={handleCopy} className="hover:bg-primary/5">
+                    {copied ? <>
                         <Check className="h-4 w-4 mr-2 text-success" />
                         Copied!
-                      </>
-                    ) : (
-                      <>
+                      </> : <>
                         <Copy className="h-4 w-4 mr-2" />
                         Copy
-                      </>
-                    )}
-                  </Button>
-                )}
+                      </>}
+                  </Button>}
               </div>
 
-              {isGenerating ? (
-                <div className="text-center py-16">
+              {isGenerating ? <div className="text-center py-16">
                   <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">
                     AI is writing your code...
                   </p>
-                </div>
-              ) : generatedCode ? (
-                <div className="rounded-lg bg-muted p-4 font-mono text-sm overflow-x-auto max-h-[400px] overflow-y-auto">
+                </div> : generatedCode ? <div className="rounded-lg bg-muted p-4 font-mono text-sm overflow-x-auto max-h-[400px] overflow-y-auto">
                   <pre className="whitespace-pre-wrap">{generatedCode}</pre>
-                </div>
-              ) : (
-                <div className="text-center py-16 text-muted-foreground">
+                </div> : <div className="text-center py-16 text-muted-foreground">
                   <Code className="h-12 w-12 mx-auto mb-4 opacity-20" />
                   <p className="text-sm">
                     Your generated code will appear here
                   </p>
-                </div>
-              )}
+                </div>}
             </Card>
 
             {/* How It Works */}
-            <Card className="p-6 bg-gradient-to-br from-accent/5 to-primary/5 border-2">
+            <Card className="p-6 bg-gradient-to-br from-accent/5 to-primary/5 border-2 rounded-3xl">
               <h3 className="font-bold mb-4">How Talk2Code Works</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex gap-3">
@@ -273,8 +216,6 @@ const Talk2Code = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Talk2Code;
