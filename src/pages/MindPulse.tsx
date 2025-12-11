@@ -8,21 +8,41 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
 const MindPulse = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const {
+    user,
+    isLoading: authLoading
+  } = useAuth();
   const navigate = useNavigate();
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionStart, setSessionStart] = useState<Date | null>(null);
-  const [stats, setStats] = useState([
-    { label: "Focus Level", value: 0, color: "primary", icon: Brain },
-    { label: "Engagement", value: 0, color: "success", icon: Activity },
-    { label: "Well-being", value: 0, color: "info", icon: Smile },
-    { label: "Energy", value: 0, color: "accent", icon: Coffee }
-  ]);
-  const [insights, setInsights] = useState<Array<{ type: string; time: string; message: string }>>([]);
-
+  const [stats, setStats] = useState([{
+    label: "Focus Level",
+    value: 0,
+    color: "primary",
+    icon: Brain
+  }, {
+    label: "Engagement",
+    value: 0,
+    color: "success",
+    icon: Activity
+  }, {
+    label: "Well-being",
+    value: 0,
+    color: "info",
+    icon: Smile
+  }, {
+    label: "Energy",
+    value: 0,
+    color: "accent",
+    icon: Coffee
+  }]);
+  const [insights, setInsights] = useState<Array<{
+    type: string;
+    time: string;
+    message: string;
+  }>>([]);
   useEffect(() => {
     if (!authLoading && !user) {
       toast.error("Please sign in to use MindPulse");
@@ -33,7 +53,6 @@ const MindPulse = () => {
   // Simulate focus monitoring with random values (in real app, this would use camera/sensors)
   useEffect(() => {
     if (!isMonitoring) return;
-
     const interval = setInterval(() => {
       setStats(prev => prev.map(stat => ({
         ...stat,
@@ -42,54 +61,61 @@ const MindPulse = () => {
 
       // Add random insights
       if (Math.random() > 0.8) {
-        const insightTypes = [
-          { type: "success", message: "Great focus! Keep up the excellent work." },
-          { type: "info", message: "Consider taking a short break soon." },
-          { type: "warning", message: "Your engagement seems to be dropping. Try switching topics." }
-        ];
+        const insightTypes = [{
+          type: "success",
+          message: "Great focus! Keep up the excellent work."
+        }, {
+          type: "info",
+          message: "Consider taking a short break soon."
+        }, {
+          type: "warning",
+          message: "Your engagement seems to be dropping. Try switching topics."
+        }];
         const randomInsight = insightTypes[Math.floor(Math.random() * insightTypes.length)];
-        setInsights(prev => [
-          { ...randomInsight, time: "Just now" },
-          ...prev.slice(0, 4)
-        ]);
+        setInsights(prev => [{
+          ...randomInsight,
+          time: "Just now"
+        }, ...prev.slice(0, 4)]);
       }
     }, 3000);
-
     return () => clearInterval(interval);
   }, [isMonitoring]);
-
   const startMonitoring = async () => {
     setIsMonitoring(true);
     setSessionStart(new Date());
-    
+
     // Initialize with baseline values
-    setStats(prev => prev.map(stat => ({ ...stat, value: 70 + Math.random() * 20 })));
-    
+    setStats(prev => prev.map(stat => ({
+      ...stat,
+      value: 70 + Math.random() * 20
+    })));
+
     // Create session in database
     if (user) {
-      const { data, error } = await supabase.from("focus_sessions").insert({
+      const {
+        data,
+        error
+      } = await supabase.from("focus_sessions").insert({
         user_id: user.id,
         focus_level: 75,
         engagement: 80,
         wellbeing: 70,
         energy: 65
       }).select().single();
-
       if (!error && data) {
         setSessionId(data.id);
       }
     }
-
-    setInsights([
-      { type: "success", time: "Just now", message: "Session started! I'll help you stay focused and monitor your well-being." }
-    ]);
-    
+    setInsights([{
+      type: "success",
+      time: "Just now",
+      message: "Session started! I'll help you stay focused and monitor your well-being."
+    }]);
     toast.success("Monitoring started!");
   };
-
   const stopMonitoring = async () => {
     setIsMonitoring(false);
-    
+
     // Update session in database
     if (user && sessionId && sessionStart) {
       const duration = Math.round((new Date().getTime() - sessionStart.getTime()) / 60000);
@@ -102,22 +128,16 @@ const MindPulse = () => {
         energy: Math.round(stats[3].value)
       }).eq("id", sessionId);
     }
-
     setSessionId(null);
     setSessionStart(null);
     toast.info("Session ended. Great work!");
   };
-
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="pt-20 pb-8 px-4 container mx-auto max-w-6xl">
@@ -139,7 +159,7 @@ const MindPulse = () => {
         </div>
 
         {/* Monitoring Control */}
-        <Card className="mb-8 p-8 text-center border-2">
+        <Card className="mb-8 p-8 text-center border-2 rounded-full">
           <div className="max-w-md mx-auto space-y-6">
             <div className={`inline-flex p-6 rounded-2xl gradient-success shadow-primary ${isMonitoring ? "animate-pulse" : ""}`}>
               <Heart className="h-12 w-12 text-success-foreground" />
@@ -149,32 +169,22 @@ const MindPulse = () => {
                 {isMonitoring ? "Monitoring Active" : "Start Monitoring"}
               </h2>
               <p className="text-muted-foreground mb-4">
-                {isMonitoring 
-                  ? "We're tracking your focus and well-being in real-time" 
-                  : "Start a focus session to track your learning wellness"}
+                {isMonitoring ? "We're tracking your focus and well-being in real-time" : "Start a focus session to track your learning wellness"}
               </p>
-              {isMonitoring && sessionStart && (
-                <p className="text-sm text-primary font-medium mb-4">
+              {isMonitoring && sessionStart && <p className="text-sm text-primary font-medium mb-4">
                   Session duration: {Math.round((new Date().getTime() - sessionStart.getTime()) / 60000)} minutes
-                </p>
-              )}
+                </p>}
             </div>
-            <Button
-              size="lg"
-              onClick={isMonitoring ? stopMonitoring : startMonitoring}
-              className={isMonitoring ? "gradient-accent text-accent-foreground" : "gradient-primary text-primary-foreground shadow-primary"}
-            >
+            <Button size="lg" onClick={isMonitoring ? stopMonitoring : startMonitoring} className={isMonitoring ? "gradient-accent text-accent-foreground" : "gradient-primary text-primary-foreground shadow-primary"}>
               {isMonitoring ? "Stop Monitoring" : "Start Monitoring"}
             </Button>
           </div>
         </Card>
 
         {/* Stats Dashboard */}
-        {isMonitoring && (
-          <>
+        {isMonitoring && <>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
-                <Card key={index} className="p-6 border-2 hover:border-primary/20 transition-colors">
+              {stats.map((stat, index) => <Card key={index} className="p-6 border-2 hover:border-primary/20 transition-colors">
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`p-2 rounded-lg bg-${stat.color}/10`}>
                       <stat.icon className={`h-5 w-5 text-${stat.color}`} />
@@ -188,8 +198,7 @@ const MindPulse = () => {
                     </div>
                     <Progress value={stat.value} className="h-2" />
                   </div>
-                </Card>
-              ))}
+                </Card>)}
             </div>
 
             {/* Insights */}
@@ -199,30 +208,15 @@ const MindPulse = () => {
                 Recent Insights
               </h3>
               <div className="space-y-4">
-                {insights.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
+                {insights.length === 0 ? <div className="text-center py-8 text-muted-foreground">
                     <Loader2 className="h-8 w-8 mx-auto mb-2 animate-spin" />
                     <p className="text-sm">Analyzing your focus patterns...</p>
-                  </div>
-                ) : (
-                  insights.map((insight, index) => (
-                    <div
-                      key={index}
-                      className={`p-4 rounded-lg border-l-4 ${
-                        insight.type === "success"
-                          ? "border-success bg-success/5"
-                          : insight.type === "info"
-                          ? "border-info bg-info/5"
-                          : "border-accent bg-accent/5"
-                      }`}
-                    >
+                  </div> : insights.map((insight, index) => <div key={index} className={`p-4 rounded-lg border-l-4 ${insight.type === "success" ? "border-success bg-success/5" : insight.type === "info" ? "border-info bg-info/5" : "border-accent bg-accent/5"}`}>
                       <div className="flex items-start justify-between mb-1">
                         <span className="text-xs text-muted-foreground">{insight.time}</span>
                       </div>
                       <p className="text-sm">{insight.message}</p>
-                    </div>
-                  ))
-                )}
+                    </div>)}
               </div>
             </Card>
 
@@ -259,11 +253,8 @@ const MindPulse = () => {
                 </div>
               </div>
             </Card>
-          </>
-        )}
+          </>}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default MindPulse;
