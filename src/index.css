@@ -9,6 +9,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Lato&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Fira+Code&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,15 +31,15 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 9%;
 
     /* Educational gradient - deep indigo to vibrant purple */
-    --primary: 243 75% 58%;
+    --primary: 161 93% 30%;
     --primary-light: 263 80% 60%;
     --primary-dark: 263 60% 40%;
-    --primary-foreground: 225 100% 96%;
+    --primary-foreground: 151 80% 95%;
 
     /* Energetic coral/orange for engagement */
-    --accent: 250 100% 97%;
+    --accent: 166 76% 96%;
     --accent-light: 14 100% 70%;
-    --accent-foreground: 258 89% 66%;
+    --accent-foreground: 173 80% 40%;
 
     /* Success green for growth */
     --success: 142 76% 36%;
@@ -60,9 +62,9 @@ All colors MUST be HSL.
 
     --border: 0 0% 83%;
     --input: 0 0% 83%;
-    --ring: 210 40% 98.0392%;
+    --ring: 161 93% 30%;
 
-    --radius: 1.25rem;
+    --radius: 0.75rem;
 
     /* Gradient definitions */
     --gradient-primary: linear-gradient(135deg, hsl(263 70% 50%) 0%, hsl(280 80% 60%) 100%);
@@ -76,22 +78,22 @@ All colors MUST be HSL.
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --chart-1: 234 89% 73%;
-    --chart-2: 255 91% 76%;
-    --chart-3: 270 95% 75%;
-    --chart-4: 238 83% 66%;
+    --chart-1: 158 64% 51%;
+    --chart-2: 141 69% 58%;
+    --chart-3: 172 66% 50%;
+    --chart-4: 82 77% 55%;
     --chart-5: 0 0% 45%;
     --sidebar: 0 0% 98%;
     --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 243 75% 58%;
-    --sidebar-primary-foreground: 225 100% 96%;
+    --sidebar-primary: 161 93% 30%;
+    --sidebar-primary-foreground: 151 80% 95%;
     --sidebar-accent: 0 0% 32%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 243 75% 58%;
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --sidebar-ring: 161 93% 30%;
+    --font-sans: 'Work Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Lora', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'Inconsolata', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -114,14 +116,14 @@ All colors MUST be HSL.
     --popover: 0 0% 25%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 234 89% 73%;
+    --primary: 158 64% 51%;
     --primary-light: 263 90% 70%;
     --primary-dark: 263 70% 50%;
-    --primary-foreground: 243 47% 20%;
+    --primary-foreground: 165 91% 9%;
 
-    --accent: 261 72% 22%;
+    --accent: 178 84% 10%;
     --accent-light: 14 100% 80%;
-    --accent-foreground: 255 91% 76%;
+    --accent-foreground: 172 66% 50%;
 
     --success: 142 76% 45%;
     --success-light: 142 76% 55%;
@@ -142,7 +144,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 32%;
     --input: 0 0% 32%;
-    --ring: 234 89% 73%;
+    --ring: 158 64% 51%;
 
     --gradient-primary: linear-gradient(135deg, hsl(263 80% 60%) 0%, hsl(280 90% 70%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(14 100% 70%) 0%, hsl(30 100% 75%) 100%);
@@ -151,19 +153,19 @@ All colors MUST be HSL.
     --shadow-primary: 0 10px 40px -10px hsl(263 80% 60% / 0.4);
     --shadow-accent: 0 10px 40px -10px hsl(14 100% 70% / 0.4);
     --shadow-elevation: 0 4px 20px hsl(0 0% 0% / 0.3);
-    --chart-1: 229 93% 81%;
-    --chart-2: 252 94% 85%;
-    --chart-3: 269 97% 85%;
-    --chart-4: 234 89% 73%;
+    --chart-1: 156 71% 66%;
+    --chart-2: 141 76% 73%;
+    --chart-3: 170 76% 64%;
+    --chart-4: 81 84% 67%;
     --chart-5: 0 0% 45%;
     --sidebar: 0 0% 14%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 234 89% 73%;
-    --sidebar-primary-foreground: 243 47% 20%;
-    --sidebar-accent: 255 91% 76%;
-    --sidebar-accent-foreground: 261 72% 22%;
+    --sidebar-primary: 158 64% 51%;
+    --sidebar-primary-foreground: 165 91% 9%;
+    --sidebar-accent: 172 66% 50%;
+    --sidebar-accent-foreground: 178 84% 10%;
     --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 234 89% 73%;
+    --sidebar-ring: 158 64% 51%;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
