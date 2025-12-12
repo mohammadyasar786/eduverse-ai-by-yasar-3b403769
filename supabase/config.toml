@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.generate-code]
 verify_jwt = false
 
+[functions.generate-quiz]
+verify_jwt = false
+
 [functions.learning-recommendations]
 verify_jwt = false
 
