@@ -162,7 +162,17 @@ const Index = () => {
               <span className="font-semibold">EduVerse</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 EduVerse. Transforming education through AI.
+              © 2025 EduVerse. Transforming education through AI.
+       An App by Yasar Technologies    
+        
+       
+      
+     
+    
+   
+  
+ 
+
             </p>
           </div>
         </div>
