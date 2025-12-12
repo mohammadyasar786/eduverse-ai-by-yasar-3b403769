@@ -22,6 +22,8 @@ interface Recommendation {
   title: string;
   reason: string;
   priority?: string;
+  module?: string;
+  concept?: string;
 }
 
 const LearnFlow = () => {
@@ -57,9 +59,9 @@ const LearnFlow = () => {
   ];
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([
-    { type: "review", title: "Review: Python Functions", reason: "Strengthen your understanding" },
-    { type: "practice", title: "Practice: Loop Exercises", reason: "Build coding muscle memory" },
-    { type: "advance", title: "Ready: Data Structures", reason: "You've mastered the prerequisites" }
+    { type: "review", title: "Review: Python Functions", reason: "Strengthen your understanding", module: "Control Flow", concept: "Functions" },
+    { type: "practice", title: "Practice: Loop Exercises", reason: "Build coding muscle memory", module: "Control Flow", concept: "Loops" },
+    { type: "advance", title: "Ready: Data Structures", reason: "You've mastered the prerequisites", module: "Data Structures", concept: "Lists" }
   ]);
 
   useEffect(() => {
@@ -316,36 +318,58 @@ const LearnFlow = () => {
           )}
 
           <div className="grid md:grid-cols-3 gap-6">
-            {recommendations.map((rec, index) => (
-              <Card
-                key={index}
-                className="p-6 border-2 hover:border-primary/20 transition-all hover:-translate-y-1 cursor-pointer rounded-3xl"
-              >
-                <div className={`inline-flex p-3 rounded-xl mb-4 ${
-                  rec.type === "review" 
-                    ? "bg-accent/10" 
-                    : rec.type === "practice" 
-                      ? "bg-info/10" 
-                      : "bg-success/10"
-                }`}>
-                  <TrendingUp className={`h-6 w-6 ${
+            {recommendations.map((rec, index) => {
+              const handleRecommendationClick = () => {
+                // Find the matching module and navigate to it
+                const targetModule = learningModules.find(m => 
+                  rec.module ? m.title === rec.module : m.topics.some(t => rec.title.toLowerCase().includes(t.toLowerCase()))
+                );
+                
+                if (targetModule) {
+                  setSelectedModule(targetModule);
+                  if (rec.concept) {
+                    setSelectedConcept(rec.concept);
+                  }
+                  toast.success(`Opening: ${rec.title}`);
+                } else {
+                  // Default to first module if no match
+                  setSelectedModule(learningModules[0]);
+                  toast.info(`Starting with: ${learningModules[0].title}`);
+                }
+              };
+
+              return (
+                <Card
+                  key={index}
+                  onClick={handleRecommendationClick}
+                  className="p-6 border-2 hover:border-primary/20 transition-all hover:-translate-y-1 cursor-pointer rounded-3xl"
+                >
+                  <div className={`inline-flex p-3 rounded-xl mb-4 ${
                     rec.type === "review" 
-                      ? "text-accent" 
+                      ? "bg-accent/10" 
                       : rec.type === "practice" 
-                        ? "text-info" 
-                        : "text-success"
-                  }`} />
-                </div>
-                <div className="uppercase text-xs font-bold text-muted-foreground mb-2">
-                  {rec.type}
-                </div>
-                <h3 className="text-lg font-bold mb-2">{rec.title}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{rec.reason}</p>
-                <Button variant="outline" size="sm" className="w-full rounded-full">
-                  Start Now
-                </Button>
-              </Card>
-            ))}
+                        ? "bg-info/10" 
+                        : "bg-success/10"
+                  }`}>
+                    <TrendingUp className={`h-6 w-6 ${
+                      rec.type === "review" 
+                        ? "text-accent" 
+                        : rec.type === "practice" 
+                          ? "text-info" 
+                          : "text-success"
+                    }`} />
+                  </div>
+                  <div className="uppercase text-xs font-bold text-muted-foreground mb-2">
+                    {rec.type}
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">{rec.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{rec.reason}</p>
+                  <Button variant="outline" size="sm" className="w-full rounded-full">
+                    Start Now
+                  </Button>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>

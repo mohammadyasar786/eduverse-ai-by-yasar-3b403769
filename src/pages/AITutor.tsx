@@ -62,9 +62,9 @@ const AITutor = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-    const userMessage = input.trim();
+  const sendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading) return;
+    const userMessage = messageText.trim();
     setInput("");
     const userMsg: Message = {
       role: "user",
@@ -159,6 +159,12 @@ const AITutor = () => {
       setIsLoading(false);
     }
   };
+
+  const handleSend = () => sendMessage(input);
+
+  const handleQuickTopic = (topic: string) => {
+    sendMessage(topic);
+  };
   const quickTopics = [{
     icon: "🔬",
     label: "Science",
@@ -206,7 +212,7 @@ const AITutor = () => {
         {messages.length === 1 && <div className="mb-6">
             <h3 className="text-sm font-medium mb-3 text-muted-foreground">Quick start topics:</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {quickTopics.map((topic, index) => <Button key={index} variant="outline" onClick={() => setInput(topic.topic)} className="h-auto py-4 flex-col gap-2 hover:border-primary/50 hover:bg-primary/5 rounded-full">
+              {quickTopics.map((topic, index) => <Button key={index} variant="outline" onClick={() => handleQuickTopic(topic.topic)} disabled={isLoading} className="h-auto py-4 flex-col gap-2 hover:border-primary/50 hover:bg-primary/5 rounded-full">
                   <span className="text-2xl">{topic.icon}</span>
                   <span className="text-sm">{topic.label}</span>
                 </Button>)}
