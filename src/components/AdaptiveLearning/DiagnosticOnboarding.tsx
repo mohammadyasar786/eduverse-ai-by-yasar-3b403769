@@ -6,136 +6,162 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Brain, Eye, Layers, ListOrdered, Calculator, ArrowRight, CheckCircle } from "lucide-react";
 import type { LearningProfile } from "@/pages/AdaptiveLearning";
-
 interface DiagnosticOnboardingProps {
   onComplete: (profile: LearningProfile) => void;
 }
-
-const diagnosticQuestions = [
-  {
-    id: 1,
-    question: "What is the time complexity of binary search?",
-    options: [
-      { value: "a", label: "O(n)" },
-      { value: "b", label: "O(log n)", correct: true },
-      { value: "c", label: "O(n²)" },
-      { value: "d", label: "O(1)" },
-    ],
-  },
-  {
-    id: 2,
-    question: "Which data structure uses LIFO principle?",
-    options: [
-      { value: "a", label: "Queue" },
-      { value: "b", label: "Stack", correct: true },
-      { value: "c", label: "Array" },
-      { value: "d", label: "Linked List" },
-    ],
-  },
-  {
-    id: 3,
-    question: "What does SQL stand for?",
-    options: [
-      { value: "a", label: "Structured Query Language", correct: true },
-      { value: "b", label: "Simple Query Language" },
-      { value: "c", label: "Standard Query Logic" },
-      { value: "d", label: "System Query Language" },
-    ],
-  },
-  {
-    id: 4,
-    question: "Which sorting algorithm has the best average-case time complexity?",
-    options: [
-      { value: "a", label: "Bubble Sort" },
-      { value: "b", label: "Selection Sort" },
-      { value: "c", label: "Merge Sort", correct: true },
-      { value: "d", label: "Insertion Sort" },
-    ],
-  },
-  {
-    id: 5,
-    question: "What is the main advantage of a hash table?",
-    options: [
-      { value: "a", label: "Ordered storage" },
-      { value: "b", label: "O(1) average lookup time", correct: true },
-      { value: "c", label: "Memory efficiency" },
-      { value: "d", label: "Simple implementation" },
-    ],
-  },
-];
-
-const learningStyles = [
-  {
-    value: "visual" as const,
-    label: "Visual Learner",
-    description: "I understand best with diagrams, charts, and visual representations",
-    icon: Eye,
-  },
-  {
-    value: "analogy" as const,
-    label: "Analogy-Based",
-    description: "I prefer real-world comparisons and relatable examples",
-    icon: Layers,
-  },
-  {
-    value: "step-by-step" as const,
-    label: "Step-by-Step",
-    description: "I learn best with detailed, sequential instructions",
-    icon: ListOrdered,
-  },
-  {
-    value: "formula-first" as const,
-    label: "Formula-First",
-    description: "I prefer mathematical formulas and formal definitions",
-    icon: Calculator,
-  },
-];
-
-const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
+const diagnosticQuestions = [{
+  id: 1,
+  question: "What is the time complexity of binary search?",
+  options: [{
+    value: "a",
+    label: "O(n)"
+  }, {
+    value: "b",
+    label: "O(log n)",
+    correct: true
+  }, {
+    value: "c",
+    label: "O(n²)"
+  }, {
+    value: "d",
+    label: "O(1)"
+  }]
+}, {
+  id: 2,
+  question: "Which data structure uses LIFO principle?",
+  options: [{
+    value: "a",
+    label: "Queue"
+  }, {
+    value: "b",
+    label: "Stack",
+    correct: true
+  }, {
+    value: "c",
+    label: "Array"
+  }, {
+    value: "d",
+    label: "Linked List"
+  }]
+}, {
+  id: 3,
+  question: "What does SQL stand for?",
+  options: [{
+    value: "a",
+    label: "Structured Query Language",
+    correct: true
+  }, {
+    value: "b",
+    label: "Simple Query Language"
+  }, {
+    value: "c",
+    label: "Standard Query Logic"
+  }, {
+    value: "d",
+    label: "System Query Language"
+  }]
+}, {
+  id: 4,
+  question: "Which sorting algorithm has the best average-case time complexity?",
+  options: [{
+    value: "a",
+    label: "Bubble Sort"
+  }, {
+    value: "b",
+    label: "Selection Sort"
+  }, {
+    value: "c",
+    label: "Merge Sort",
+    correct: true
+  }, {
+    value: "d",
+    label: "Insertion Sort"
+  }]
+}, {
+  id: 5,
+  question: "What is the main advantage of a hash table?",
+  options: [{
+    value: "a",
+    label: "Ordered storage"
+  }, {
+    value: "b",
+    label: "O(1) average lookup time",
+    correct: true
+  }, {
+    value: "c",
+    label: "Memory efficiency"
+  }, {
+    value: "d",
+    label: "Simple implementation"
+  }]
+}];
+const learningStyles = [{
+  value: "visual" as const,
+  label: "Visual Learner",
+  description: "I understand best with diagrams, charts, and visual representations",
+  icon: Eye
+}, {
+  value: "analogy" as const,
+  label: "Analogy-Based",
+  description: "I prefer real-world comparisons and relatable examples",
+  icon: Layers
+}, {
+  value: "step-by-step" as const,
+  label: "Step-by-Step",
+  description: "I learn best with detailed, sequential instructions",
+  icon: ListOrdered
+}, {
+  value: "formula-first" as const,
+  label: "Formula-First",
+  description: "I prefer mathematical formulas and formal definitions",
+  icon: Calculator
+}];
+const DiagnosticOnboarding = ({
+  onComplete
+}: DiagnosticOnboardingProps) => {
   const [step, setStep] = useState<"intro" | "diagnostic" | "style" | "complete">("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<{ questionId: number; answer: string; correct: boolean }[]>([]);
+  const [answers, setAnswers] = useState<{
+    questionId: number;
+    answer: string;
+    correct: boolean;
+  }[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
   const [selectedStyle, setSelectedStyle] = useState<LearningProfile["learningStyle"] | null>(null);
-
   const handleAnswerSubmit = () => {
     const question = diagnosticQuestions[currentQuestion];
-    const correctOption = question.options.find((o) => o.correct);
+    const correctOption = question.options.find(o => o.correct);
     const isCorrect = selectedAnswer === correctOption?.value;
-
-    setAnswers([...answers, { questionId: question.id, answer: selectedAnswer, correct: isCorrect }]);
+    setAnswers([...answers, {
+      questionId: question.id,
+      answer: selectedAnswer,
+      correct: isCorrect
+    }]);
     setSelectedAnswer("");
-
     if (currentQuestion < diagnosticQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setStep("style");
     }
   };
-
   const handleStyleSelect = () => {
     if (!selectedStyle) return;
-
-    const correctAnswers = answers.filter((a) => a.correct).length;
-    const diagnosticScore = (correctAnswers / diagnosticQuestions.length) * 100;
-
+    const correctAnswers = answers.filter(a => a.correct).length;
+    const diagnosticScore = correctAnswers / diagnosticQuestions.length * 100;
     const profile: LearningProfile = {
       diagnosticScore,
       learningStyle: selectedStyle,
-      answeredQuestions: answers.map((a) => ({ questionId: a.questionId, correct: a.correct })),
+      answeredQuestions: answers.map(a => ({
+        questionId: a.questionId,
+        correct: a.correct
+      }))
     };
-
     setStep("complete");
     setTimeout(() => onComplete(profile), 1500);
   };
-
-  const progress = step === "diagnostic" 
-    ? ((currentQuestion + 1) / diagnosticQuestions.length) * 100 
-    : step === "style" ? 100 : 0;
-
+  const progress = step === "diagnostic" ? (currentQuestion + 1) / diagnosticQuestions.length * 100 : step === "style" ? 100 : 0;
   if (step === "intro") {
-    return (
-      <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
+    return <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm rounded-3xl">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Brain className="h-8 w-8 text-primary" />
@@ -147,7 +173,7 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+          <div className="bg-muted/30 p-4 space-y-3 rounded-3xl">
             <h3 className="font-medium text-foreground">What to expect:</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
@@ -164,19 +190,16 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
               </li>
             </ul>
           </div>
-          <Button onClick={() => setStep("diagnostic")} className="w-full" size="lg">
+          <Button onClick={() => setStep("diagnostic")} size="lg" className="w-full rounded-full">
             Start Assessment
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (step === "diagnostic") {
     const question = diagnosticQuestions[currentQuestion];
-    return (
-      <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
+    return <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
@@ -191,40 +214,22 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-            {question.options.map((option) => (
-              <div
-                key={option.value}
-                className={`flex items-center space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${
-                  selectedAnswer === option.value
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50 hover:bg-muted/30"
-                }`}
-                onClick={() => setSelectedAnswer(option.value)}
-              >
+            {question.options.map(option => <div key={option.value} className={`flex items-center space-x-3 p-4 rounded-lg border transition-colors cursor-pointer ${selectedAnswer === option.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"}`} onClick={() => setSelectedAnswer(option.value)}>
                 <RadioGroupItem value={option.value} id={option.value} />
                 <Label htmlFor={option.value} className="flex-1 cursor-pointer">
                   {option.label}
                 </Label>
-              </div>
-            ))}
+              </div>)}
           </RadioGroup>
-          <Button
-            onClick={handleAnswerSubmit}
-            disabled={!selectedAnswer}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleAnswerSubmit} disabled={!selectedAnswer} className="w-full" size="lg">
             {currentQuestion < diagnosticQuestions.length - 1 ? "Next Question" : "Continue"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (step === "style") {
-    return (
-      <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
+    return <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">How do you learn best?</CardTitle>
           <CardDescription>
@@ -233,18 +238,9 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3">
-            {learningStyles.map((style) => {
-              const Icon = style.icon;
-              return (
-                <div
-                  key={style.value}
-                  className={`flex items-start gap-4 p-4 rounded-lg border transition-colors cursor-pointer ${
-                    selectedStyle === style.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50 hover:bg-muted/30"
-                  }`}
-                  onClick={() => setSelectedStyle(style.value)}
-                >
+            {learningStyles.map(style => {
+            const Icon = style.icon;
+            return <div key={style.value} className={`flex items-start gap-4 p-4 rounded-lg border transition-colors cursor-pointer ${selectedStyle === style.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"}`} onClick={() => setSelectedStyle(style.value)}>
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
@@ -252,28 +248,19 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
                     <h4 className="font-medium text-foreground">{style.label}</h4>
                     <p className="text-sm text-muted-foreground">{style.description}</p>
                   </div>
-                </div>
-              );
-            })}
+                </div>;
+          })}
           </div>
-          <Button
-            onClick={handleStyleSelect}
-            disabled={!selectedStyle}
-            className="w-full mt-4"
-            size="lg"
-          >
+          <Button onClick={handleStyleSelect} disabled={!selectedStyle} className="w-full mt-4" size="lg">
             Create My Learning Profile
             <CheckCircle className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (step === "complete") {
-    const correctCount = answers.filter((a) => a.correct).length;
-    return (
-      <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
+    const correctCount = answers.filter(a => a.correct).length;
+    return <Card className="max-w-2xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
         <CardContent className="py-12 text-center">
           <div className="mx-auto w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
             <CheckCircle className="h-10 w-10 text-success" />
@@ -286,11 +273,8 @@ const DiagnosticOnboarding = ({ onComplete }: DiagnosticOnboardingProps) => {
             Preparing your personalized learning experience...
           </p>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   return null;
 };
-
 export default DiagnosticOnboarding;
