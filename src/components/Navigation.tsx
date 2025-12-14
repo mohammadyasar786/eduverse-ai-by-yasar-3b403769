@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, LayoutDashboard } from "lucide-react";
+import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, LayoutDashboard, GraduationCap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "./ThemeToggle";
 const Navigation = () => {
@@ -49,6 +49,12 @@ const Navigation = () => {
               <Link to="/learnflow" className="flex items-center gap-2 rounded-3xl">
                 <TrendingUp className="h-4 w-4" />
                 LearnFlow
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-success hover:bg-success/5">
+              <Link to="/adaptive-learning" className="flex items-center gap-2 rounded-3xl">
+                <GraduationCap className="h-4 w-4" />
+                Adaptive
               </Link>
             </Button>
           </div>
