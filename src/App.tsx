@@ -10,6 +10,7 @@ import ARLearning from "./pages/ARLearning";
 import MindPulse from "./pages/MindPulse";
 import Talk2Code from "./pages/Talk2Code";
 import LearnFlow from "./pages/LearnFlow";
+import AdaptiveLearning from "./pages/AdaptiveLearning";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/mindpulse" element={<MindPulse />} />
             <Route path="/talk2code" element={<Talk2Code />} />
             <Route path="/learnflow" element={<LearnFlow />} />
+            <Route path="/adaptive-learning" element={<AdaptiveLearning />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
