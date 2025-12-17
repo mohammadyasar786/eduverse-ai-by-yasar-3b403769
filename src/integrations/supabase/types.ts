@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      adaptive_concept_progress: {
+        Row: {
+          attempts: number
+          concept_id: string
+          created_at: string
+          id: string
+          quiz_score: number
+          status: string
+          time_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          concept_id: string
+          created_at?: string
+          id?: string
+          quiz_score?: number
+          status?: string
+          time_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          concept_id?: string
+          created_at?: string
+          id?: string
+          quiz_score?: number
+          status?: string
+          time_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      adaptive_learning_profiles: {
+        Row: {
+          answered_questions: Json | null
+          created_at: string
+          diagnostic_score: number
+          id: string
+          learning_style: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_questions?: Json | null
+          created_at?: string
+          diagnostic_score?: number
+          id?: string
+          learning_style?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_questions?: Json | null
+          created_at?: string
+          diagnostic_score?: number
+          id?: string
+          learning_style?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
