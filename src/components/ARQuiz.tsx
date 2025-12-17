@@ -180,7 +180,7 @@ const ARQuiz = ({ topic, onComplete, onClose }: ARQuizProps) => {
             <Trophy className={`h-12 w-12 ${percentage >= 75 ? "text-yellow-500" : "text-primary"}`} />
           </div>
           <h2 className="text-2xl font-bold">Quiz Complete!</h2>
-          <p className="text-4xl font-bold gradient-primary bg-clip-text text-transparent">
+          <p className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-500">
             {finalScore}/{questions.length}
           </p>
           <p className="text-muted-foreground">

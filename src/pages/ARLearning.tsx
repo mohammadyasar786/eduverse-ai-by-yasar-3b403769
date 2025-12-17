@@ -88,7 +88,7 @@ const ARLearning = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold">
             Visualize Complex Concepts in{" "}
-            <span className="bg-clip-text text-transparent gradient-primary">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-500">
               Interactive 3D
             </span>
           </h1>
