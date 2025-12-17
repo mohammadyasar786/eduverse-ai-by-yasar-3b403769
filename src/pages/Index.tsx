@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
-import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, Zap, Users, Target } from "lucide-react";
+import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, Zap, Users, Target, GraduationCap } from "lucide-react";
 const Index = () => {
   const features = [{
     icon: Brain,
@@ -34,6 +34,12 @@ const Index = () => {
     description: "Adaptive learning paths tailored to your progress. AI-powered recommendations for optimal learning journey.",
     color: "primary",
     href: "/learnflow"
+  }, {
+    icon: GraduationCap,
+    title: "Adaptive Chapter Learning",
+    description: "Personalized self-paced learning with diagnostic onboarding, adaptive explanations, and faculty insights.",
+    color: "accent",
+    href: "/adaptive-learning"
   }];
   const stats = [{
     icon: Users,
@@ -105,7 +111,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl font-bold text-center md:text-6xl">
-              Five Powerful{" "}
+              Six Powerful{" "}
               <span className="bg-clip-text text-transparent gradient-accent">
                 Learning Modules
               </span>
