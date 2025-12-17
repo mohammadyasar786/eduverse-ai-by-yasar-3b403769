@@ -199,7 +199,7 @@ const AITutor = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold">
             Your Personal{" "}
-            <span className="bg-clip-text text-transparent gradient-primary">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-500">
               AI Learning Assistant
             </span>
           </h1>

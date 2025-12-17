@@ -15,7 +15,7 @@ const Navigation = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-primary transition-transform group-hover:scale-105">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent gradient-primary">
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-500">
               EduVerse
             </span>
           </Link>

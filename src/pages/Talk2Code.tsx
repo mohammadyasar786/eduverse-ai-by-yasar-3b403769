@@ -96,7 +96,7 @@ const Talk2Code = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold">
             Speak Your Code into{" "}
-            <span className="bg-clip-text text-transparent gradient-accent">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500">
               Existence
             </span>
           </h1>
