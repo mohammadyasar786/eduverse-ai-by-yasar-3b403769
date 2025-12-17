@@ -71,7 +71,7 @@ const Index = () => {
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">
               Transform Your{" "}
-              <span className="bg-clip-text text-transparent gradient-primary">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-fuchsia-500">
                 Learning Journey
               </span>
             </h1>
@@ -112,7 +112,7 @@ const Index = () => {
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl font-bold text-center md:text-6xl">
               Six Powerful{" "}
-              <span className="bg-clip-text text-transparent gradient-accent">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500">
                 Learning Modules
               </span>
             </h2>
