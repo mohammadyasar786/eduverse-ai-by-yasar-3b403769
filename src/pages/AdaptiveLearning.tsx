@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AIVAButton } from "@/components/AIVA";
 
 export interface LearningProfile {
   diagnosticScore: number;
@@ -232,6 +233,15 @@ const AdaptiveLearning = () => {
           </Tabs>
         </div>
       </main>
+      
+      {/* AIVA Floating AI Companion */}
+      <AIVAButton 
+        context={{
+          concept: selectedConcept || undefined,
+          chapter: "Adaptive Learning",
+        }}
+        learningStyle={learningProfile?.learningStyle}
+      />
     </div>
   );
 };

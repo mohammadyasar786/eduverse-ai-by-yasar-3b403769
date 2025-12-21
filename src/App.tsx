@@ -14,6 +14,7 @@ import AdaptiveLearning from "./pages/AdaptiveLearning";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProgressBoard from "./pages/ProgressBoard";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/talk2code" element={<Talk2Code />} />
             <Route path="/learnflow" element={<LearnFlow />} />
             <Route path="/adaptive-learning" element={<AdaptiveLearning />} />
+            <Route path="/progress-board" element={<ProgressBoard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

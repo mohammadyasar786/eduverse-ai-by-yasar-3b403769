@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ModuleView from "@/components/LearnFlow/ModuleView";
 import ConceptLesson from "@/components/LearnFlow/ConceptLesson";
+import { AIVAButton } from "@/components/AIVA";
 
 interface LearningModule {
   title: string;
@@ -373,6 +374,15 @@ const LearnFlow = () => {
           </div>
         </div>
       </div>
+      
+      {/* AIVA Floating AI Companion */}
+      <AIVAButton 
+        context={{
+          concept: selectedConcept || undefined,
+          chapter: selectedModule?.title,
+          topic: "LearnFlow"
+        }}
+      />
     </div>
   );
 };

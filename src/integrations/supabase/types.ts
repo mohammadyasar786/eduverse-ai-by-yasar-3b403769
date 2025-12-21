@@ -80,6 +80,36 @@ export type Database = {
         }
         Relationships: []
       }
+      aiva_conversations: {
+        Row: {
+          created_at: string
+          current_chapter: string | null
+          current_concept: string | null
+          id: string
+          messages: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_chapter?: string | null
+          current_concept?: string | null
+          id?: string
+          messages?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_chapter?: string | null
+          current_concept?: string | null
+          id?: string
+          messages?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -167,6 +197,63 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          show_improvement: boolean
+          show_on_leaderboard: boolean
+          show_streak: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_improvement?: boolean
+          show_on_leaderboard?: boolean
+          show_streak?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_improvement?: boolean
+          show_on_leaderboard?: boolean
+          show_streak?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_achievements: {
+        Row: {
+          achieved_at: string
+          achievement_type: string
+          achievement_value: number
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string
+          achievement_type: string
+          achievement_value?: number
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string
+          achievement_type?: string
+          achievement_value?: number
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_progress: {
         Row: {
           completed_at: string | null
@@ -198,6 +285,39 @@ export type Database = {
           progress?: number
           status?: string
           topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string | null
+          longest_streak: number
+          total_active_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          total_active_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          longest_streak?: number
+          total_active_days?: number
           updated_at?: string
           user_id?: string
         }

@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.adaptive-learning]
 verify_jwt = false
+
+[functions.aiva-chat]
+verify_jwt = false
