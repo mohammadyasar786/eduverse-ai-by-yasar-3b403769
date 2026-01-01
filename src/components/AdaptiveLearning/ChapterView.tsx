@@ -8,6 +8,7 @@ import {
   Brain, ChevronRight, Clock, Target
 } from "lucide-react";
 import FocusCheck from "./FocusCheck";
+import ConceptPulse from "./ConceptPulse";
 import type { LearningProfile, ConceptProgress } from "@/pages/AdaptiveLearning";
 
 interface ChapterViewProps {
@@ -235,7 +236,16 @@ const ChapterView = ({
                       )}
                     </div>
                     <div>
-                      <h4 className="font-medium text-foreground">{concept.title}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-foreground">{concept.title}</h4>
+                        {progress && (progress.attempts > 0 || progress.quizScore > 0) && (
+                          <ConceptPulse
+                            quizScore={progress.quizScore}
+                            timeSpent={progress.timeSpent}
+                            attempts={progress.attempts}
+                          />
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{concept.description}</p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">

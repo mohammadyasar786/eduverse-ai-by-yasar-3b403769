@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Save, BookOpen, BarChart3, AlertTriangle, Users, Target, CheckCircle, TrendingUp } from "lucide-react";
+import { Upload, Save, BookOpen, BarChart3, AlertTriangle, Users, Target, CheckCircle, TrendingUp, Activity, Lightbulb, Brain } from "lucide-react";
 import { toast } from "sonner";
 import type { ConceptProgress } from "@/pages/AdaptiveLearning";
+import ConceptPulse from "./ConceptPulse";
+
 interface FacultyDashboardProps {
   conceptProgress: ConceptProgress[];
 }
@@ -19,6 +21,24 @@ interface ChapterContent {
   objectives: string[];
   misconceptions: string[];
 }
+
+// Simulated AI-detected misconceptions based on performance patterns
+const detectedMisconceptions = [
+  { concept: "Arrays", misconception: "Confusing 0-based vs 1-based indexing", frequency: 42, resolved: 15 },
+  { concept: "Stacks", misconception: "Mixing up push/pop with enqueue/dequeue", frequency: 38, resolved: 22 },
+  { concept: "Linked Lists", misconception: "Losing reference when inserting nodes", frequency: 31, resolved: 18 },
+  { concept: "Trees", misconception: "Confusing depth vs height", frequency: 27, resolved: 12 },
+  { concept: "Sorting", misconception: "Assuming all sorts are O(n log n)", frequency: 35, resolved: 20 },
+];
+
+// Simulated explanation style effectiveness data
+const explanationEffectiveness = [
+  { style: "Step-by-step", successRate: 78, usage: 45 },
+  { style: "Visual/Analogy", successRate: 82, usage: 30 },
+  { style: "Formula-first", successRate: 65, usage: 15 },
+  { style: "Hands-on Examples", successRate: 85, usage: 10 },
+];
+
 const conceptData = [{
   id: "arrays",
   title: "Arrays and Lists"
@@ -86,6 +106,28 @@ const FacultyDashboard = ({
       timeSpent: progress?.timeSpent || 0
     };
   };
+
+  // Calculate pulse distribution (aggregated, no individual data)
+  const getPulseDistribution = () => {
+    let green = 0, yellow = 0, red = 0, neutral = 0;
+    conceptProgress.forEach(p => {
+      const score = p.quizScore || 0;
+      const attempts = p.attempts || 0;
+      if (attempts === 0 && score === 0) {
+        neutral++;
+      } else if (score >= 70) {
+        green++;
+      } else if (score >= 40) {
+        yellow++;
+      } else {
+        red++;
+      }
+    });
+    return { green, yellow, red, neutral, total: conceptProgress.length || 1 };
+  };
+
+  const pulseDistribution = getPulseDistribution();
+
   const overallStats = {
     totalStudents: 1,
     // In demo, just current user
