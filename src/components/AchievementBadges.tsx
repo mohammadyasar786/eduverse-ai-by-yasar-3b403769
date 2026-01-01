@@ -47,6 +47,21 @@ const ACHIEVEMENT_CONFIG: Record<string, { emoji: string; title: string; descrip
     title: "Most Improved",
     description: "Showed significant improvement in quiz scores",
   },
+  misconception_crusher: {
+    emoji: "💡",
+    title: "Misconception Crusher",
+    description: "Overcame a common misconception",
+  },
+  consistency_champion: {
+    emoji: "🌟",
+    title: "Consistency Champion",
+    description: "Maintained consistent daily learning",
+  },
+  deep_thinker: {
+    emoji: "🎓",
+    title: "Deep Thinker",
+    description: "Provided excellent Explain-it-back responses",
+  },
 };
 
 interface AchievementBadgesProps {

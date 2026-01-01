@@ -12,11 +12,50 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, learningStyle, conversationHistory } = await req.json();
+    const { message, context, learningStyle, conversationHistory, performanceData } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Analyze performance patterns for adaptive behavior
+    const wrongAnswers = performanceData?.wrongAnswers || 0;
+    const quizScore = performanceData?.quizScore || 0;
+    const attempts = performanceData?.attempts || 0;
+    const timeSpent = performanceData?.timeSpent || 0;
+    const isInactive = performanceData?.isInactive || false;
+    const progressSpeed = performanceData?.progressSpeed || "normal"; // "fast", "normal", "slow"
+
+    // Determine adaptive response style
+    let adaptiveStyle = "normal";
+    let additionalGuidance = "";
+
+    if (wrongAnswers >= 3 || (quizScore > 0 && quizScore < 40)) {
+      adaptiveStyle = "simplified";
+      additionalGuidance = `
+IMPORTANT - ADAPTIVE MODE: The student is struggling (${wrongAnswers} wrong answers, ${quizScore}% score).
+- Slow down your explanations significantly
+- Use very simple analogies and everyday examples
+- Break concepts into smaller, digestible pieces
+- Be extra encouraging: "This is a tricky concept, but you're making progress"
+- Ask clarifying questions to understand where they're stuck`;
+    } else if (progressSpeed === "fast" || (quizScore >= 85 && attempts <= 1)) {
+      adaptiveStyle = "concise";
+      additionalGuidance = `
+IMPORTANT - ADAPTIVE MODE: The student is progressing quickly (${quizScore}% score, ${attempts} attempts).
+- Provide more concise explanations
+- Skip basic introductions, get to the point
+- Suggest application-based or challenge questions
+- Encourage deeper exploration: "Want to try a more advanced scenario?"`;
+    } else if (isInactive || timeSpent > 1800) {
+      adaptiveStyle = "gentle-nudge";
+      additionalGuidance = `
+IMPORTANT - ADAPTIVE MODE: The student has been inactive or spending long time (${Math.round(timeSpent/60)} min).
+- Start with a gentle check-in: "Still here? No pressure."
+- Suggest a short break if they've been at it for a while
+- Offer to simplify or approach from a different angle
+- Do NOT pressure them: "Take your time. Learning isn't a race."`;
     }
 
     // Build contextual system prompt for AIVA
@@ -36,24 +75,38 @@ ${learningStyle ? `- Student's Learning Style: ${learningStyle}` : ''}
 ${context?.recentPerformance ? `- Recent Performance: ${context.recentPerformance}` : ''}
 ${context?.focusLevel ? `- Current Focus Level: ${context.focusLevel}` : ''}
 
+PERFORMANCE DATA:
+- Quiz Score: ${quizScore}%
+- Attempts: ${attempts}
+- Time Spent: ${Math.round(timeSpent/60)} minutes
+- Wrong Answers This Session: ${wrongAnswers}
+- Adaptive Mode: ${adaptiveStyle}
+${additionalGuidance}
+
 YOUR GUIDELINES:
 1. Answer doubts ONLY related to the current chapter or concept if provided.
 2. If the student asks something unrelated to learning, politely redirect them.
 3. Use the student's learning style to explain concepts:
    - "step-by-step": Break down into numbered steps
    - "visual": Use analogies, diagrams descriptions, and visual metaphors
-   - "conceptual": Focus on underlying principles and connections
-   - "hands-on": Provide examples and practical applications
+   - "analogy": Connect to familiar real-world scenarios
+   - "formula-first": Lead with the formal definition, then explain
 
-4. When a student struggles (multiple wrong answers, low focus, or confusion):
+4. ADAPTIVE RESPONSES based on performance:
+   - If struggling: Slow down, use simpler analogies, be extra encouraging
+   - If progressing fast: Be concise, suggest challenges, encourage depth
+   - If inactive: Gentle nudge without pressure, offer alternatives
+
+5. When a student struggles (multiple wrong answers, low focus, or confusion):
    - Offer encouragement: "This concept often takes time. Want a simpler analogy?"
    - Suggest breaks if needed: "You've been at this for a while. A short break might help."
    - Break down problems: "Let's break this into smaller steps."
 
-5. NEVER:
+6. NEVER:
    - Give final answers without explanation
    - Use jokes, memes, or overly playful language
    - Answer questions completely unrelated to academics
+   - Pressure or rush the student
 
 PERSONALITY:
 - Calm and supportive
