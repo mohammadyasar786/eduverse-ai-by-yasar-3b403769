@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
@@ -6,6 +6,9 @@ import { BookOpen, Box, Play, Atom, Dna, Globe, X, ClipboardCheck } from "lucide
 import ARScene from "@/components/AR3DModels/ARScene";
 import ARQuiz from "@/components/ARQuiz";
 import { toast } from "sonner";
+import { AIVAButton } from "@/components/AIVA";
+import { useLearningStreak } from "@/hooks/useLearningStreak";
+import { useAuth } from "@/hooks/useAuth";
 
 type ModelType = "dna" | "atom" | "cell" | "math";
 
@@ -18,9 +21,18 @@ interface ARModule {
 }
 
 const ARLearning = () => {
+  const { user } = useAuth();
+  const { updateStreak } = useLearningStreak();
   const [activeModel, setActiveModel] = useState<ModelType | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizTopic, setQuizTopic] = useState<ModelType>("dna");
+
+  // Update streak when user visits AR Learning
+  useEffect(() => {
+    if (user) {
+      updateStreak();
+    }
+  }, [user, updateStreak]);
 
   const arModules: ARModule[] = [
     {
@@ -272,6 +284,11 @@ const ARLearning = () => {
           </div>
         </Card>
       </div>
+
+      <AIVAButton 
+        context={{ topic: activeModel ? getModelTitle(activeModel) : "AR Learning" }} 
+        learningStyle="visual" 
+      />
     </div>
   );
 };

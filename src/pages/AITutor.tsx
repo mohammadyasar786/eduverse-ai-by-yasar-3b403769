@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
+import { AIVAButton } from "@/components/AIVA";
+import { useLearningStreak } from "@/hooks/useLearningStreak";
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -26,6 +28,7 @@ const AITutor = () => {
     stop,
     isSpeaking
   } = useTextToSpeech();
+  const { updateStreak } = useLearningStreak();
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
     content: "Hello! I'm your AI tutor. I'm here to help you learn anything you'd like. What would you like to study today?"
@@ -57,6 +60,13 @@ const AITutor = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Update streak when user starts a session
+  useEffect(() => {
+    if (user) {
+      updateStreak();
+    }
+  }, [user, updateStreak]);
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -276,6 +286,11 @@ const AITutor = () => {
           </div>
         </Card>
       </div>
+
+      <AIVAButton 
+        context={{ topic: "AI Tutor Session" }} 
+        learningStyle="step-by-step" 
+      />
     </div>;
 };
 export default AITutor;

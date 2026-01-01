@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
+import AchievementBadges from "@/components/AchievementBadges";
 
 interface StreakData {
   currentStreak: number;
@@ -418,17 +419,19 @@ const ProgressBoard = () => {
               </Card>
             </div>
 
-            {/* Personal Bests */}
+            {/* Personal Bests & Achievement Badges */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Award className="h-5 w-5 text-amber-500" />
-                  Personal Bests
+                  Achievement Badges
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {achievements.length > 0 ? (
-                  <div className="grid gap-3 md:grid-cols-2">
+              <CardContent className="space-y-4">
+                <AchievementBadges />
+                
+                {achievements.length > 0 && (
+                  <div className="grid gap-3 md:grid-cols-2 pt-4 border-t">
                     {achievements.map((achievement, index) => (
                       <div
                         key={index}
@@ -445,11 +448,6 @@ const ProgressBoard = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Trophy className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>Complete more learning activities to unlock achievements!</p>
                   </div>
                 )}
               </CardContent>
