@@ -8,12 +8,15 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AIVAButton } from "@/components/AIVA";
+import { useLearningStreak } from "@/hooks/useLearningStreak";
 const MindPulse = () => {
   const {
     user,
     isLoading: authLoading
   } = useAuth();
   const navigate = useNavigate();
+  const { updateStreak, recordFocusSession } = useLearningStreak();
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionStart, setSessionStart] = useState<Date | null>(null);
@@ -49,6 +52,13 @@ const MindPulse = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Update streak when user starts monitoring
+  useEffect(() => {
+    if (user && isMonitoring) {
+      updateStreak();
+    }
+  }, [user, isMonitoring, updateStreak]);
 
   // Simulate focus monitoring with random values (in real app, this would use camera/sensors)
   useEffect(() => {
@@ -127,6 +137,9 @@ const MindPulse = () => {
         wellbeing: Math.round(stats[2].value),
         energy: Math.round(stats[3].value)
       }).eq("id", sessionId);
+
+      // Record focus session for achievements
+      await recordFocusSession(duration);
     }
     setSessionId(null);
     setSessionStart(null);
@@ -255,6 +268,14 @@ const MindPulse = () => {
             </Card>
           </>}
       </div>
+
+      <AIVAButton 
+        context={{ 
+          topic: "Focus & Well-being",
+          focusLevel: isMonitoring ? `${Math.round(stats[0].value)}%` : undefined 
+        }} 
+        learningStyle="step-by-step" 
+      />
     </div>;
 };
 export default MindPulse;
