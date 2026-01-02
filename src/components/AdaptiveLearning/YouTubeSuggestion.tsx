@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, Youtube, Loader2 } from "lucide-react";
+import { Youtube, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface YouTubeSuggestionProps {
@@ -100,10 +99,8 @@ const YouTubeSuggestion = ({ conceptId, conceptTitle }: YouTubeSuggestionProps) 
     };
   };
 
-  const handleWatchVideo = () => {
-    if (video?.videoId) {
-      window.open(`https://www.youtube.com/watch?v=${video.videoId}`, "_blank", "noopener,noreferrer");
-    }
+  const getYouTubeUrl = () => {
+    return `https://www.youtube.com/watch?v=${video?.videoId}`;
   };
 
   if (isLoading) {
@@ -142,15 +139,17 @@ const YouTubeSuggestion = ({ conceptId, conceptTitle }: YouTubeSuggestionProps) 
           </div>
 
           <div className="flex flex-col items-end gap-1 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleWatchVideo}
-              className="gap-2"
+            <a
+              href={getYouTubeUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
             >
-              <ExternalLink className="h-3 w-3" />
-              Watch on YouTube (opens in new tab)
-            </Button>
+              Watch on YouTube ↗
+              <span className="text-xs font-normal text-muted-foreground no-underline">
+                (opens in new tab)
+              </span>
+            </a>
             <span className="text-[10px] text-muted-foreground">
               External resource – optional
             </span>
