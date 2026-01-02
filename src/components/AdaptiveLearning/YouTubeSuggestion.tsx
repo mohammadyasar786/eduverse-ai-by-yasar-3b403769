@@ -137,19 +137,24 @@ const YouTubeSuggestion = ({ conceptId, conceptTitle }: YouTubeSuggestionProps) 
               {video.title}
             </h4>
             <p className="text-xs text-muted-foreground mt-1">
-              {video.duration} • External resource for additional clarity (optional)
+              {video.duration}
             </p>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleWatchVideo}
-            className="gap-2 flex-shrink-0"
-          >
-            <ExternalLink className="h-3 w-3" />
-            Watch on YouTube
-          </Button>
+          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleWatchVideo}
+              className="gap-2"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Watch on YouTube (opens in new tab)
+            </Button>
+            <span className="text-[10px] text-muted-foreground">
+              External resource – optional
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
