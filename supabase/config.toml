@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.aiva-chat]
 verify_jwt = false
+
+[functions.youtube-suggestion]
+verify_jwt = false
