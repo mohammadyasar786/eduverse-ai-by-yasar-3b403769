@@ -100,7 +100,8 @@ const YouTubeSuggestion = ({ conceptId, conceptTitle }: YouTubeSuggestionProps) 
   };
 
   const getYouTubeUrl = () => {
-    return `https://www.youtube.com/watch?v=${video?.videoId}`;
+    if (!video?.videoId) return "";
+    return `https://www.youtube.com/watch?v=${video.videoId}`;
   };
 
   if (isLoading) {
@@ -143,12 +144,10 @@ const YouTubeSuggestion = ({ conceptId, conceptTitle }: YouTubeSuggestionProps) 
               href={getYouTubeUrl()}
               target="_blank"
               rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
             >
-              Watch on YouTube ↗
-              <span className="text-xs font-normal text-muted-foreground no-underline">
-                (opens in new tab)
-              </span>
+              Watch on YouTube ↗ (opens in new tab)
             </a>
             <span className="text-[10px] text-muted-foreground">
               External resource – optional
