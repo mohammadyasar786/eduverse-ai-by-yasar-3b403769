@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
-import { BookOpen, Box, Play, Atom, Dna, Globe, X, ClipboardCheck } from "lucide-react";
+import { BookOpen, Box, Play, Atom, Dna, Globe, X, ClipboardCheck, Layers, ArrowRightLeft, Grid3X3 } from "lucide-react";
 import ARScene from "@/components/AR3DModels/ARScene";
 import ARQuiz from "@/components/ARQuiz";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { AIVAButton } from "@/components/AIVA";
 import { useLearningStreak } from "@/hooks/useLearningStreak";
 import { useAuth } from "@/hooks/useAuth";
 
-type ModelType = "dna" | "atom" | "cell" | "math";
+type ModelType = "dna" | "atom" | "cell" | "math" | "stack" | "queue" | "array";
 
 interface ARModule {
   id: ModelType;
@@ -62,6 +62,27 @@ const ARLearning = () => {
       title: "Math Visualizer",
       description: "See mathematical functions come alive in 3D space",
       color: "primary"
+    },
+    {
+      id: "stack",
+      icon: Layers,
+      title: "Stack Data Structure",
+      description: "Visualize LIFO (Last In, First Out) operations with push and pop",
+      color: "success"
+    },
+    {
+      id: "queue",
+      icon: ArrowRightLeft,
+      title: "Queue Data Structure",
+      description: "Understand FIFO (First In, First Out) with enqueue and dequeue",
+      color: "info"
+    },
+    {
+      id: "array",
+      icon: Grid3X3,
+      title: "Arrays and Lists",
+      description: "See how arrays store data in contiguous memory with indexed access",
+      color: "accent"
     }
   ];
 
