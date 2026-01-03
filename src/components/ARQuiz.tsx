@@ -122,6 +122,84 @@ const quizData: Record<string, QuizQuestion[]> = {
       correctAnswer: 2,
       explanation: "When z = f(x,y), it's a function of two variables that creates a 3D surface."
     }
+  ],
+  stack: [
+    {
+      question: "What does LIFO stand for in stack operations?",
+      options: ["Last In First Out", "Last In Fast Out", "Linear In First Out", "List In First Out"],
+      correctAnswer: 0,
+      explanation: "LIFO (Last In, First Out) means the last element added is the first one removed."
+    },
+    {
+      question: "Which operation adds an element to the top of a stack?",
+      options: ["Pop", "Push", "Enqueue", "Insert"],
+      correctAnswer: 1,
+      explanation: "Push adds an element to the top of the stack."
+    },
+    {
+      question: "What happens when you pop from an empty stack?",
+      options: ["Returns null", "Stack underflow", "Returns 0", "Nothing"],
+      correctAnswer: 1,
+      explanation: "Attempting to pop from an empty stack causes a stack underflow error."
+    },
+    {
+      question: "Which data structure uses a stack internally?",
+      options: ["BFS algorithm", "Function call management", "Round-robin scheduling", "Print queue"],
+      correctAnswer: 1,
+      explanation: "Function calls use a call stack to manage execution context and return addresses."
+    }
+  ],
+  queue: [
+    {
+      question: "What does FIFO stand for in queue operations?",
+      options: ["First In Fast Out", "Fast In First Out", "First In First Out", "Final In First Out"],
+      correctAnswer: 2,
+      explanation: "FIFO (First In, First Out) means the first element added is the first one removed."
+    },
+    {
+      question: "Which operation removes an element from the front of a queue?",
+      options: ["Push", "Pop", "Dequeue", "Enqueue"],
+      correctAnswer: 2,
+      explanation: "Dequeue removes and returns the element at the front of the queue."
+    },
+    {
+      question: "Where are new elements added in a queue?",
+      options: ["Front", "Middle", "Rear/Back", "Random position"],
+      correctAnswer: 2,
+      explanation: "New elements are always added at the rear (back) of the queue."
+    },
+    {
+      question: "Which real-world scenario best represents a queue?",
+      options: ["Undo operation in editor", "People waiting in line", "Recursive function calls", "Browser back button"],
+      correctAnswer: 1,
+      explanation: "People waiting in line follow FIFO: first person in line is served first."
+    }
+  ],
+  array: [
+    {
+      question: "What is the time complexity to access an element by index in an array?",
+      options: ["O(n)", "O(log n)", "O(1)", "O(n²)"],
+      correctAnswer: 2,
+      explanation: "Arrays provide O(1) constant time access because elements are stored contiguously in memory."
+    },
+    {
+      question: "What is the index of the first element in most programming languages?",
+      options: ["1", "0", "-1", "Depends on the language"],
+      correctAnswer: 1,
+      explanation: "In most languages (C, Java, Python, JavaScript), array indexing starts at 0."
+    },
+    {
+      question: "What is a key limitation of static arrays?",
+      options: ["Cannot store numbers", "Fixed size after creation", "Cannot be sorted", "Slow access time"],
+      correctAnswer: 1,
+      explanation: "Static arrays have a fixed size that cannot be changed after creation."
+    },
+    {
+      question: "How are array elements stored in memory?",
+      options: ["Randomly scattered", "Linked by pointers", "Contiguously/sequentially", "In a tree structure"],
+      correctAnswer: 2,
+      explanation: "Array elements are stored in contiguous (adjacent) memory locations."
+    }
   ]
 };
 

@@ -5,9 +5,12 @@ import DNAModel from "./DNAModel";
 import AtomModel from "./AtomModel";
 import CellModel from "./CellModel";
 import MathModel from "./MathModel";
+import StackModel from "./StackModel";
+import QueueModel from "./QueueModel";
+import ArrayModel from "./ArrayModel";
 
 interface ARSceneProps {
-  modelType: "dna" | "atom" | "cell" | "math";
+  modelType: "dna" | "atom" | "cell" | "math" | "stack" | "queue" | "array";
 }
 
 const LoadingFallback = () => (
@@ -28,6 +31,12 @@ const ARScene = ({ modelType }: ARSceneProps) => {
         return <CellModel scale={1.2} />;
       case "math":
         return <MathModel scale={0.8} />;
+      case "stack":
+        return <StackModel />;
+      case "queue":
+        return <QueueModel />;
+      case "array":
+        return <ArrayModel />;
       default:
         return <DNAModel scale={0.8} />;
     }
@@ -36,7 +45,7 @@ const ARScene = ({ modelType }: ARSceneProps) => {
   return (
     <div className="w-full h-full rounded-xl overflow-hidden bg-gradient-to-br from-background to-muted">
       <Canvas>
-        <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={50} />
+        <PerspectiveCamera makeDefault position={[0, 0, 8]} fov={50} />
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <pointLight position={[-10, -10, -10]} intensity={0.5} color="#8b5cf6" />
@@ -56,7 +65,7 @@ const ARScene = ({ modelType }: ARSceneProps) => {
           enablePan={false}
           enableZoom={true}
           minDistance={3}
-          maxDistance={10}
+          maxDistance={15}
           autoRotate={false}
         />
         
