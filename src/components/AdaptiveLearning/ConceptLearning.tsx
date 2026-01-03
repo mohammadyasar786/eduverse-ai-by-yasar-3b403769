@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import AdaptivePractice from "./AdaptivePractice";
-import YouTubeSuggestion from "./YouTubeSuggestion";
+import NPTELSuggestion from "./NPTELSuggestion";
 import type { LearningProfile, ConceptProgress } from "@/pages/AdaptiveLearning";
 
 interface ConceptLearningProps {
@@ -228,8 +228,8 @@ const ConceptLearning = ({
         </CardContent>
       </Card>
 
-      {/* Optional YouTube Suggestion */}
-      <YouTubeSuggestion conceptId={conceptId} conceptTitle={concept?.title || ""} />
+      {/* Optional NPTEL Academic Video */}
+      <NPTELSuggestion conceptId={conceptId} conceptTitle={concept?.title || ""} />
 
       {/* Practice Section */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
