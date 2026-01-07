@@ -82,12 +82,8 @@ const Index = () => {
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Button size="lg" className="gradient-primary text-primary-foreground shadow-primary hover:opacity-90 h-12 px-8 text-base rounded-full">
-                Start Learning Free
-              </Button>
-              <Button size="lg" variant="outline" className="h-12 px-8 text-base border-2 hover:bg-primary/5 rounded-full">
-                Watch Demo
-              </Button>
+              
+              
             </div>
 
             {/* Stats */}
@@ -167,19 +163,7 @@ const Index = () => {
               </div>
               <span className="font-semibold">EduVerse</span>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2025 EduVerse. Transforming education through AI.
-       An App by Yasar Technologies    
-        
-       
-      
-     
-    
-   
-  
- 
-
-            </p>
+            <p className="text-sm text-muted-foreground">© 2026 EduVerse. Transforming education through AI.</p>
           </div>
         </div>
       </footer>
