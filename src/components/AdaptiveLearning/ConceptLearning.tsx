@@ -19,38 +19,19 @@ interface ConceptLearningProps {
   onProgressUpdate: (progress: Partial<ConceptProgress>) => void;
 }
 
+// Focused on Arrays, Stacks, and Queues chapter ONLY
 const conceptData: Record<string, { title: string; content: string }> = {
   arrays: {
-    title: "Arrays and Lists",
-    content: "Arrays are fundamental data structures that store elements in contiguous memory locations. They provide O(1) access time for elements using indices.",
+    title: "Arrays",
+    content: "Arrays are fundamental data structures that store elements in contiguous memory locations. They provide O(1) access time for elements using indices. Arrays have fixed size in most languages, and elements can be accessed, modified, or iterated efficiently. Key operations include: Access (O(1)), Search (O(n)), Insert at end (O(1) amortized), Insert at position (O(n)), Delete (O(n)).",
   },
-  "stacks-queues": {
-    title: "Stacks and Queues",
-    content: "Stacks follow LIFO (Last In, First Out) while Queues follow FIFO (First In, First Out). These structures are essential for managing ordered data.",
+  stacks: {
+    title: "Stacks",
+    content: "Stacks follow the LIFO (Last In, First Out) principle. Think of a stack of plates - you can only add or remove from the top. Key operations: Push (add to top), Pop (remove from top), Peek (view top without removing). Common uses: Function call management, Undo operations, Expression evaluation, Backtracking algorithms, Browser history.",
   },
-  "linked-lists": {
-    title: "Linked Lists",
-    content: "Linked lists store elements in nodes, where each node contains data and a reference to the next node. They allow dynamic memory allocation.",
-  },
-  trees: {
-    title: "Trees and Binary Trees",
-    content: "Trees are hierarchical data structures with a root node and child nodes. Binary trees have at most two children per node.",
-  },
-  sorting: {
-    title: "Sorting Algorithms",
-    content: "Sorting algorithms arrange data in a specific order. Common algorithms include Bubble Sort, Merge Sort, and Quick Sort with varying time complexities.",
-  },
-  searching: {
-    title: "Searching Algorithms",
-    content: "Searching algorithms find specific elements in data structures. Linear search is O(n) while binary search on sorted arrays is O(log n).",
-  },
-  "hash-tables": {
-    title: "Hash Tables",
-    content: "Hash tables use a hash function to map keys to array indices, providing average O(1) time for insertions, deletions, and lookups.",
-  },
-  graphs: {
-    title: "Graphs and Graph Algorithms",
-    content: "Graphs consist of vertices connected by edges. They model relationships and networks, with algorithms like BFS and DFS for traversal.",
+  queues: {
+    title: "Queues",
+    content: "Queues follow the FIFO (First In, First Out) principle. Like a line at a store - first person in line is served first. Key operations: Enqueue (add to rear), Dequeue (remove from front), Front (view first element). Common uses: Task scheduling, BFS traversal, Print job spooling, Message queues, CPU scheduling.",
   },
 };
 

@@ -18,65 +18,31 @@ interface ChapterViewProps {
   onResetProfile: () => void;
 }
 
+// Focused chapter: Arrays, Stacks, and Queues ONLY
 const chapterData = {
-  title: "Data Structures and Algorithms",
-  description: "Master fundamental data structures and algorithmic thinking",
+  title: "Arrays, Stacks, and Queues",
+  description: "Master fundamental linear data structures for efficient data management",
   concepts: [
     {
       id: "arrays",
-      title: "Arrays and Lists",
-      description: "Understanding sequential data storage",
+      title: "Arrays",
+      description: "Contiguous memory storage with O(1) access time using indices",
       prerequisites: [],
-      estimatedTime: 15,
-    },
-    {
-      id: "stacks-queues",
-      title: "Stacks and Queues",
-      description: "LIFO and FIFO data structures",
-      prerequisites: ["arrays"],
       estimatedTime: 20,
     },
     {
-      id: "linked-lists",
-      title: "Linked Lists",
-      description: "Dynamic data structures with pointers",
+      id: "stacks",
+      title: "Stacks",
+      description: "LIFO (Last In, First Out) data structure for backtracking and recursion",
       prerequisites: ["arrays"],
       estimatedTime: 25,
     },
     {
-      id: "trees",
-      title: "Trees and Binary Trees",
-      description: "Hierarchical data organization",
-      prerequisites: ["linked-lists"],
-      estimatedTime: 30,
-    },
-    {
-      id: "sorting",
-      title: "Sorting Algorithms",
-      description: "Efficient data ordering techniques",
+      id: "queues",
+      title: "Queues",
+      description: "FIFO (First In, First Out) data structure for scheduling and BFS",
       prerequisites: ["arrays"],
-      estimatedTime: 35,
-    },
-    {
-      id: "searching",
-      title: "Searching Algorithms",
-      description: "Finding elements efficiently",
-      prerequisites: ["arrays", "sorting"],
       estimatedTime: 25,
-    },
-    {
-      id: "hash-tables",
-      title: "Hash Tables",
-      description: "Fast key-value lookups",
-      prerequisites: ["arrays"],
-      estimatedTime: 30,
-    },
-    {
-      id: "graphs",
-      title: "Graphs and Graph Algorithms",
-      description: "Network and relationship modeling",
-      prerequisites: ["trees", "linked-lists"],
-      estimatedTime: 40,
     },
   ],
 };

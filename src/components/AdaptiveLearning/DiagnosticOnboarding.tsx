@@ -9,26 +9,27 @@ import type { LearningProfile } from "@/pages/AdaptiveLearning";
 interface DiagnosticOnboardingProps {
   onComplete: (profile: LearningProfile) => void;
 }
+// Diagnostic questions focused on Arrays, Stacks, and Queues ONLY
 const diagnosticQuestions = [{
   id: 1,
-  question: "What is the time complexity of binary search?",
+  question: "What is the time complexity of accessing an element in an array by its index?",
   options: [{
     value: "a",
     label: "O(n)"
   }, {
     value: "b",
-    label: "O(log n)",
+    label: "O(1)",
     correct: true
   }, {
     value: "c",
-    label: "O(n²)"
+    label: "O(log n)"
   }, {
     value: "d",
-    label: "O(1)"
+    label: "O(n²)"
   }]
 }, {
   id: 2,
-  question: "Which data structure uses LIFO principle?",
+  question: "Which data structure uses the LIFO (Last In, First Out) principle?",
   options: [{
     value: "a",
     label: "Queue"
@@ -45,54 +46,54 @@ const diagnosticQuestions = [{
   }]
 }, {
   id: 3,
-  question: "What does SQL stand for?",
+  question: "What operation adds an element to the rear of a queue?",
   options: [{
     value: "a",
-    label: "Structured Query Language",
-    correct: true
+    label: "Push"
   }, {
     value: "b",
-    label: "Simple Query Language"
+    label: "Pop"
   }, {
     value: "c",
-    label: "Standard Query Logic"
+    label: "Enqueue",
+    correct: true
   }, {
     value: "d",
-    label: "System Query Language"
+    label: "Peek"
   }]
 }, {
   id: 4,
-  question: "Which sorting algorithm has the best average-case time complexity?",
+  question: "Which is a common use case for stacks?",
   options: [{
     value: "a",
-    label: "Bubble Sort"
+    label: "Print job scheduling"
   }, {
     value: "b",
-    label: "Selection Sort"
-  }, {
-    value: "c",
-    label: "Merge Sort",
+    label: "Undo functionality in text editors",
     correct: true
   }, {
+    value: "c",
+    label: "First-come-first-served queuing"
+  }, {
     value: "d",
-    label: "Insertion Sort"
+    label: "Round-robin scheduling"
   }]
 }, {
   id: 5,
-  question: "What is the main advantage of a hash table?",
+  question: "What is the main disadvantage of arrays compared to dynamic data structures?",
   options: [{
     value: "a",
-    label: "Ordered storage"
+    label: "Slow access time"
   }, {
     value: "b",
-    label: "O(1) average lookup time",
+    label: "Fixed size in most implementations",
     correct: true
   }, {
     value: "c",
-    label: "Memory efficiency"
+    label: "Cannot store numbers"
   }, {
     value: "d",
-    label: "Simple implementation"
+    label: "Require pointers"
   }]
 }];
 const learningStyles = [{
@@ -166,9 +167,9 @@ const DiagnosticOnboarding = ({
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Brain className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome to Adaptive Learning</CardTitle>
+          <CardTitle className="text-2xl">Arrays, Stacks, and Queues</CardTitle>
           <CardDescription className="text-base mt-2">
-            Let's create your personalized learning profile. This will help us tailor 
+            Let's create your personalized learning profile for this chapter. This will help us tailor 
             explanations and practice questions to your unique learning style.
           </CardDescription>
         </CardHeader>
