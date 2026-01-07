@@ -22,13 +22,14 @@ interface ChapterContent {
   misconceptions: string[];
 }
 
-// Simulated AI-detected misconceptions based on performance patterns
+// AI-detected misconceptions for Arrays, Stacks, and Queues chapter
 const detectedMisconceptions = [
   { concept: "Arrays", misconception: "Confusing 0-based vs 1-based indexing", frequency: 42, resolved: 15 },
+  { concept: "Arrays", misconception: "Not understanding array bounds and overflow", frequency: 35, resolved: 18 },
   { concept: "Stacks", misconception: "Mixing up push/pop with enqueue/dequeue", frequency: 38, resolved: 22 },
-  { concept: "Linked Lists", misconception: "Losing reference when inserting nodes", frequency: 31, resolved: 18 },
-  { concept: "Trees", misconception: "Confusing depth vs height", frequency: 27, resolved: 12 },
-  { concept: "Sorting", misconception: "Assuming all sorts are O(n log n)", frequency: 35, resolved: 20 },
+  { concept: "Stacks", misconception: "Confusion about when to use stack vs queue", frequency: 30, resolved: 14 },
+  { concept: "Queues", misconception: "Circular queue wraparound logic", frequency: 27, resolved: 12 },
+  { concept: "Queues", misconception: "Priority queue vs regular queue behavior", frequency: 25, resolved: 10 },
 ];
 
 // Simulated explanation style effectiveness data
@@ -39,39 +40,36 @@ const explanationEffectiveness = [
   { style: "Hands-on Examples", successRate: 85, usage: 10 },
 ];
 
+// Focused on Arrays, Stacks, and Queues only
 const conceptData = [{
   id: "arrays",
-  title: "Arrays and Lists"
+  title: "Arrays"
 }, {
-  id: "stacks-queues",
-  title: "Stacks and Queues"
+  id: "stacks",
+  title: "Stacks"
 }, {
-  id: "linked-lists",
-  title: "Linked Lists"
-}, {
-  id: "trees",
-  title: "Trees and Binary Trees"
-}, {
-  id: "sorting",
-  title: "Sorting Algorithms"
-}, {
-  id: "searching",
-  title: "Searching Algorithms"
-}, {
-  id: "hash-tables",
-  title: "Hash Tables"
-}, {
-  id: "graphs",
-  title: "Graphs and Graph Algorithms"
+  id: "queues",
+  title: "Queues"
 }];
 const FacultyDashboard = ({
   conceptProgress
 }: FacultyDashboardProps) => {
   const [chapterContent, setChapterContent] = useState<ChapterContent>({
-    title: "Data Structures and Algorithms",
+    title: "Arrays, Stacks, and Queues",
     content: "",
-    objectives: ["Understand fundamental data structures", "Analyze algorithm complexity", "Apply appropriate structures to problems"],
-    misconceptions: ["Confusing time vs space complexity", "Mixing up LIFO and FIFO", "Assuming all searches are O(n)"]
+    objectives: [
+      "Understand array memory layout and indexing",
+      "Implement stack operations (push, pop, peek)",
+      "Implement queue operations (enqueue, dequeue)",
+      "Differentiate between LIFO and FIFO patterns",
+      "Apply stacks and queues to solve real problems"
+    ],
+    misconceptions: [
+      "Confusing 0-based vs 1-based indexing",
+      "Mixing up stack (LIFO) with queue (FIFO) operations",
+      "Not understanding when to use stack vs queue",
+      "Confusion about circular queue implementation"
+    ]
   });
   const [newObjective, setNewObjective] = useState("");
   const [newMisconception, setNewMisconception] = useState("");

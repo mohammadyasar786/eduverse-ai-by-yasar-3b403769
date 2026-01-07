@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import DiagnosticOnboarding from "@/components/AdaptiveLearning/DiagnosticOnboarding";
 import ChapterView from "@/components/AdaptiveLearning/ChapterView";
 import ConceptLearning from "@/components/AdaptiveLearning/ConceptLearning";
 import FacultyDashboard from "@/components/AdaptiveLearning/FacultyDashboard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { GraduationCap, Users } from "lucide-react";
+import ResearchExpertDashboard from "@/components/AdaptiveLearning/ResearchExpertDashboard";
+import RoleSelector from "@/components/AdaptiveLearning/RoleSelector";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { GraduationCap, Users, FlaskConical, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AIVAButton } from "@/components/AIVA";
@@ -26,14 +30,26 @@ export interface ConceptProgress {
   attempts: number;
 }
 
+const roleIcons = {
+  student: GraduationCap,
+  faculty: Users,
+  research_expert: FlaskConical,
+};
+
+const roleLabels = {
+  student: "Student",
+  faculty: "Faculty",
+  research_expert: "Research Expert",
+};
+
 const AdaptiveLearning = () => {
   const { user, isLoading: authLoading } = useAuth();
+  const { role, isLoading: roleLoading, setUserRole } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [learningProfile, setLearningProfile] = useState<LearningProfile | null>(null);
   const [conceptProgress, setConceptProgress] = useState<ConceptProgress[]>([]);
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("student");
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -99,6 +115,15 @@ const AdaptiveLearning = () => {
     }
   }, [user, authLoading]);
 
+  const handleRoleSelect = async (selectedRole: AppRole) => {
+    const { error } = await setUserRole(selectedRole);
+    if (error) {
+      toast({ title: "Error", description: "Failed to set role.", variant: "destructive" });
+    } else {
+      toast({ title: "Welcome!", description: `You're now logged in as ${roleLabels[selectedRole]}.` });
+    }
+  };
+
   const handleProfileComplete = async (profile: LearningProfile) => {
     setLearningProfile(profile);
 
@@ -160,7 +185,18 @@ const AdaptiveLearning = () => {
     }
   };
 
-  if (authLoading || isLoadingData) {
+  const handleSwitchRole = async () => {
+    if (user) {
+      try {
+        await supabase.from("user_roles").delete().eq("user_id", user.id);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error switching role:", error);
+      }
+    }
+  };
+
+  if (authLoading || roleLoading || isLoadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -182,66 +218,82 @@ const AdaptiveLearning = () => {
     }
   };
 
+  const RoleIcon = role ? roleIcons[role] : GraduationCap;
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-6xl mx-auto">
+          {/* Header with chapter focus */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Adaptive Chapter Learning</h1>
-            <p className="text-muted-foreground">
-              Personalized learning experience powered by AI
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Arrays, Stacks, and Queues
+                </h1>
+                <p className="text-muted-foreground">
+                  AI-powered self-learning module • Data Structures
+                </p>
+              </div>
+              {role && (
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="gap-2 px-3 py-1.5">
+                    <RoleIcon className="h-4 w-4" />
+                    {roleLabels[role]}
+                  </Badge>
+                  <Button variant="ghost" size="sm" onClick={handleSwitchRole}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Switch Role
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="student" className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Student View
-              </TabsTrigger>
-              <TabsTrigger value="faculty" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Faculty View
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="student">
-              {!learningProfile ? (
-                <DiagnosticOnboarding onComplete={handleProfileComplete} />
-              ) : selectedConcept ? (
-                <ConceptLearning
-                  conceptId={selectedConcept}
-                  learningProfile={learningProfile}
-                  progress={conceptProgress.find((p) => p.conceptId === selectedConcept)}
-                  onBack={handleConceptBack}
-                  onProgressUpdate={(progress) => handleProgressUpdate(selectedConcept, progress)}
-                />
-              ) : (
-                <ChapterView
-                  learningProfile={learningProfile}
-                  conceptProgress={conceptProgress}
-                  onConceptSelect={handleConceptSelect}
-                  onResetProfile={handleResetProfile}
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="faculty">
-              <FacultyDashboard conceptProgress={conceptProgress} />
-            </TabsContent>
-          </Tabs>
+          {/* Role selection or role-specific content */}
+          {!role ? (
+            <RoleSelector onSelectRole={handleRoleSelect} isLoading={roleLoading} />
+          ) : role === "student" ? (
+            // Student View
+            !learningProfile ? (
+              <DiagnosticOnboarding onComplete={handleProfileComplete} />
+            ) : selectedConcept ? (
+              <ConceptLearning
+                conceptId={selectedConcept}
+                learningProfile={learningProfile}
+                progress={conceptProgress.find((p) => p.conceptId === selectedConcept)}
+                onBack={handleConceptBack}
+                onProgressUpdate={(progress) => handleProgressUpdate(selectedConcept, progress)}
+              />
+            ) : (
+              <ChapterView
+                learningProfile={learningProfile}
+                conceptProgress={conceptProgress}
+                onConceptSelect={handleConceptSelect}
+                onResetProfile={handleResetProfile}
+              />
+            )
+          ) : role === "faculty" ? (
+            // Faculty View
+            <FacultyDashboard conceptProgress={conceptProgress} />
+          ) : (
+            // Research Expert View
+            <ResearchExpertDashboard />
+          )}
         </div>
       </main>
       
-      {/* AIVA Floating AI Companion */}
-      <AIVAButton 
-        context={{
-          concept: selectedConcept || undefined,
-          chapter: "Adaptive Learning",
-        }}
-        learningStyle={learningProfile?.learningStyle}
-      />
+      {/* AIVA Floating AI Companion - Only for students */}
+      {role === "student" && (
+        <AIVAButton 
+          context={{
+            concept: selectedConcept || undefined,
+            chapter: "Arrays, Stacks, and Queues",
+          }}
+          learningStyle={learningProfile?.learningStyle}
+        />
+      )}
     </div>
   );
 };
