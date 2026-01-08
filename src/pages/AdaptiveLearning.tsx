@@ -44,7 +44,7 @@ const roleLabels = {
 
 const AdaptiveLearning = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const { role, isLoading: roleLoading, setUserRole } = useUserRole();
+  const { role, isLoading: roleLoading, setUserRole, clearRole } = useUserRole();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [learningProfile, setLearningProfile] = useState<LearningProfile | null>(null);
@@ -186,14 +186,7 @@ const AdaptiveLearning = () => {
   };
 
   const handleSwitchRole = async () => {
-    if (user) {
-      try {
-        await supabase.from("user_roles").delete().eq("user_id", user.id);
-        window.location.reload();
-      } catch (error) {
-        console.error("Error switching role:", error);
-      }
-    }
+    await clearRole();
   };
 
   if (authLoading || roleLoading || isLoadingData) {

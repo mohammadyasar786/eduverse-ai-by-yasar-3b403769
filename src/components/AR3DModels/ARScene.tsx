@@ -1,16 +1,12 @@
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Environment, PerspectiveCamera } from "@react-three/drei";
-import DNAModel from "./DNAModel";
-import AtomModel from "./AtomModel";
-import CellModel from "./CellModel";
-import MathModel from "./MathModel";
 import StackModel from "./StackModel";
 import QueueModel from "./QueueModel";
 import ArrayModel from "./ArrayModel";
 
 interface ARSceneProps {
-  modelType: "dna" | "atom" | "cell" | "math" | "stack" | "queue" | "array";
+  modelType: "stack" | "queue" | "array";
 }
 
 const LoadingFallback = () => (
@@ -23,14 +19,6 @@ const LoadingFallback = () => (
 const ARScene = ({ modelType }: ARSceneProps) => {
   const renderModel = () => {
     switch (modelType) {
-      case "dna":
-        return <DNAModel scale={0.8} />;
-      case "atom":
-        return <AtomModel scale={0.8} />;
-      case "cell":
-        return <CellModel scale={1.2} />;
-      case "math":
-        return <MathModel scale={0.8} />;
       case "stack":
         return <StackModel />;
       case "queue":
@@ -38,7 +26,7 @@ const ARScene = ({ modelType }: ARSceneProps) => {
       case "array":
         return <ArrayModel />;
       default:
-        return <DNAModel scale={0.8} />;
+        return <StackModel />;
     }
   };
 
