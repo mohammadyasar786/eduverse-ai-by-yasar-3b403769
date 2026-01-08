@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
-import { BookOpen, Box, Play, Atom, Dna, Globe, X, ClipboardCheck, Layers, ArrowRightLeft, Grid3X3 } from "lucide-react";
+import { BookOpen, Play, X, ClipboardCheck, Layers, ArrowRightLeft, Grid3X3 } from "lucide-react";
 import ARScene from "@/components/AR3DModels/ARScene";
 import ARQuiz from "@/components/ARQuiz";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { AIVAButton } from "@/components/AIVA";
 import { useLearningStreak } from "@/hooks/useLearningStreak";
 import { useAuth } from "@/hooks/useAuth";
 
-type ModelType = "dna" | "atom" | "cell" | "math" | "stack" | "queue" | "array";
+type ModelType = "stack" | "queue" | "array";
 
 interface ARModule {
   id: ModelType;
@@ -25,7 +25,7 @@ const ARLearning = () => {
   const { updateStreak } = useLearningStreak();
   const [activeModel, setActiveModel] = useState<ModelType | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [quizTopic, setQuizTopic] = useState<ModelType>("dna");
+  const [quizTopic, setQuizTopic] = useState<ModelType>("stack");
 
   // Update streak when user visits AR Learning
   useEffect(() => {
@@ -35,34 +35,6 @@ const ARLearning = () => {
   }, [user, updateStreak]);
 
   const arModules: ARModule[] = [
-    {
-      id: "atom",
-      icon: Atom,
-      title: "Physics Lab",
-      description: "Explore atomic structure with orbiting electrons in immersive 3D",
-      color: "info"
-    },
-    {
-      id: "cell",
-      icon: Dna,
-      title: "Biology 3D",
-      description: "Dive into cellular structures and biological systems",
-      color: "success"
-    },
-    {
-      id: "dna",
-      icon: Globe,
-      title: "DNA Explorer",
-      description: "Experience the double helix in stunning detail",
-      color: "accent"
-    },
-    {
-      id: "math",
-      icon: Box,
-      title: "Math Visualizer",
-      description: "See mathematical functions come alive in 3D space",
-      color: "primary"
-    },
     {
       id: "stack",
       icon: Layers,
@@ -189,19 +161,19 @@ const ARLearning = () => {
           <div className="grid md:grid-cols-2">
             <div className="aspect-square md:aspect-auto bg-gradient-to-br from-info/20 via-primary/20 to-accent/20 relative">
               <div className="absolute inset-0">
-                <ARScene modelType="dna" />
+                <ARScene modelType="stack" />
               </div>
             </div>
             <div className="p-8 flex flex-col justify-center">
-              <h3 className="text-2xl font-bold mb-2">DNA Structure Explorer</h3>
+              <h3 className="text-2xl font-bold mb-2">Stack Data Structure</h3>
               <p className="text-muted-foreground mb-6">
-                Experience the iconic double helix structure in stunning 3D detail. Watch the base pairs connect and understand how genetic information is stored.
+                Explore the LIFO (Last In, First Out) principle in stunning 3D. Watch how push and pop operations work with stacked elements.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button 
                   size="lg" 
                   className="gradient-primary text-primary-foreground shadow-primary"
-                  onClick={() => setActiveModel("dna")}
+                  onClick={() => setActiveModel("stack")}
                 >
                   <Play className="h-4 w-4 mr-2" />
                   Launch Full View
@@ -209,7 +181,7 @@ const ARLearning = () => {
                 <Button 
                   size="lg" 
                   variant="outline"
-                  onClick={() => handleStartQuiz("dna")}
+                  onClick={() => handleStartQuiz("stack")}
                   className="border-primary text-primary hover:bg-primary/10"
                 >
                   <ClipboardCheck className="h-4 w-4 mr-2" />

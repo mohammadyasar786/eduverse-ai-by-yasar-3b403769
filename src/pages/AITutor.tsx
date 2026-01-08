@@ -222,7 +222,12 @@ const AITutor = () => {
         {messages.length === 1 && <div className="mb-6">
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {quickTopics.map((topic, index) => {})}
+              {quickTopics.map((topic, index) => (
+                <Button key={index} variant="outline" className="text-left h-auto py-3 px-4">
+                  <span className="mr-2 shrink-0">{topic.icon}</span>
+                  <span className="text-sm">{topic.label}</span>
+                </Button>
+              ))}
             </div>
           </div>}
 

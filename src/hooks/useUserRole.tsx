@@ -41,12 +41,15 @@ export const useUserRole = () => {
     if (!user) return { error: new Error("Not authenticated") };
 
     try {
+      // Delete existing role first, then insert new one
+      await supabase.from("user_roles").delete().eq("user_id", user.id);
+      
       const { error } = await supabase
         .from("user_roles")
-        .upsert({
+        .insert({
           user_id: user.id,
           role: newRole,
-        }, { onConflict: "user_id,role" });
+        });
 
       if (error) throw error;
       setRole(newRole);
@@ -57,5 +60,15 @@ export const useUserRole = () => {
     }
   };
 
-  return { role, isLoading, setUserRole };
+  const clearRole = async () => {
+    if (!user) return;
+    try {
+      await supabase.from("user_roles").delete().eq("user_id", user.id);
+      setRole(null);
+    } catch (error) {
+      console.error("Error clearing role:", error);
+    }
+  };
+
+  return { role, isLoading, setUserRole, clearRole };
 };
