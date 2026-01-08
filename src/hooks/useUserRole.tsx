@@ -41,17 +41,28 @@ export const useUserRole = () => {
     if (!user) return { error: new Error("Not authenticated") };
 
     try {
-      // Delete existing role first, then insert new one
-      await supabase.from("user_roles").delete().eq("user_id", user.id);
-      
-      const { error } = await supabase
+      // First check if role exists
+      const { data: existing } = await supabase
         .from("user_roles")
-        .insert({
-          user_id: user.id,
-          role: newRole,
-        });
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing role
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: newRole })
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: user.id, role: newRole });
+        if (error) throw error;
+      }
+
       setRole(newRole);
       return { error: null };
     } catch (error) {
