@@ -13,6 +13,10 @@ import LearnFlow from "./pages/LearnFlow";
 import AdaptiveLearning from "./pages/AdaptiveLearning";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import RoleSelection from "./pages/RoleSelection";
+import StudentDashboard from "./pages/StudentDashboard";
+import FacultyDashboardPage from "./pages/FacultyDashboardPage";
+import ResearchDashboardPage from "./pages/ResearchDashboardPage";
 import NotFound from "./pages/NotFound";
 import ProgressBoard from "./pages/ProgressBoard";
 
@@ -27,8 +31,12 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/select-role" element={<RoleSelection />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />
+            <Route path="/research-dashboard" element={<ResearchDashboardPage />} />
             <Route path="/tutor" element={<AITutor />} />
             <Route path="/ar-learning" element={<ARLearning />} />
             <Route path="/mindpulse" element={<MindPulse />} />

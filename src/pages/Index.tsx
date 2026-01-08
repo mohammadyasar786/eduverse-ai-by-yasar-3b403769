@@ -146,8 +146,8 @@ const Index = () => {
             <p className="text-xl text-muted-foreground">
               Join thousands of students already learning smarter with EduVerse
             </p>
-            <Button size="lg" className="gradient-primary text-primary-foreground shadow-primary hover:opacity-90 h-12 px-8 text-base rounded-full">
-              Get Started Now
+            <Button size="lg" className="gradient-primary text-primary-foreground shadow-primary hover:opacity-90 h-12 px-8 text-base rounded-full" asChild>
+              <Link to="/select-role">Get Started Now</Link>
             </Button>
           </div>
         </div>

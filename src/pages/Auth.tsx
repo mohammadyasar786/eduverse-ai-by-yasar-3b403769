@@ -5,12 +5,25 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
-import { GraduationCap, Mail, Lock, User, Sparkles } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Sparkles, Users, FlaskConical } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+
+const roleIcons = {
+  student: GraduationCap,
+  faculty: Users,
+  research_expert: FlaskConical,
+};
+
+const roleLabels = {
+  student: "Student",
+  faculty: "Faculty",
+  research_expert: "Research Expert",
+};
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,13 +32,48 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
+  const { role, isLoading: roleLoading, setUserRole } = useUserRole();
   const navigate = useNavigate();
 
+  // Get pending role from sessionStorage (set during role selection)
+  const pendingRole = sessionStorage.getItem("pendingRole") as AppRole | null;
+
+  // Redirect authenticated users based on their role
   useEffect(() => {
-    if (user) {
-      navigate("/");
+    if (user && !roleLoading) {
+      if (role) {
+        // User has a role, redirect to appropriate dashboard
+        redirectToRoleDashboard(role);
+      } else if (pendingRole) {
+        // User just signed up with a pending role, set it
+        setUserRole(pendingRole).then(({ error }) => {
+          if (!error) {
+            sessionStorage.removeItem("pendingRole");
+            redirectToRoleDashboard(pendingRole);
+          }
+        });
+      } else {
+        // Existing user without a role, go to role selection
+        navigate("/select-role");
+      }
     }
-  }, [user, navigate]);
+  }, [user, role, roleLoading, pendingRole]);
+
+  const redirectToRoleDashboard = (userRole: AppRole) => {
+    switch (userRole) {
+      case "student":
+        navigate("/student-dashboard");
+        break;
+      case "faculty":
+        navigate("/faculty-dashboard");
+        break;
+      case "research_expert":
+        navigate("/research-dashboard");
+        break;
+      default:
+        navigate("/");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +102,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Welcome back!");
-          navigate("/");
+          // Redirect will happen via useEffect when role is loaded
         }
       } else {
         const { error } = await signUp(email, password, displayName);
@@ -66,7 +114,7 @@ const Auth = () => {
           }
         } else {
           toast.success("Account created! Welcome to EduVerse!");
-          navigate("/");
+          // Redirect will happen via useEffect when role is set
         }
       }
     } catch (error) {
@@ -75,6 +123,8 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  const RoleIcon = pendingRole ? roleIcons[pendingRole] : GraduationCap;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -89,10 +139,21 @@ const Auth = () => {
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-3 justify-center">
             <div className="p-3 rounded-2xl gradient-primary shadow-primary">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
+              <Sparkles className="h-8 w-8 text-primary-foreground" />
             </div>
             <span className="text-3xl font-bold">EduVerse</span>
           </div>
+          
+          {/* Show selected role if coming from role selection */}
+          {pendingRole && !isLogin && (
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+              <RoleIcon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">
+                Signing up as {roleLabels[pendingRole]}
+              </span>
+            </div>
+          )}
+          
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back! Continue your learning journey." : "Join the future of personalized education."}
           </p>
@@ -171,7 +232,7 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-4">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
@@ -183,6 +244,17 @@ const Auth = () => {
                 <>Already have an account? <span className="font-semibold text-primary">Sign in</span></>
               )}
             </button>
+            
+            {/* Back to role selection */}
+            {!isLogin && (
+              <button
+                type="button"
+                onClick={() => navigate("/select-role")}
+                className="block w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                ← Choose a different role
+              </button>
+            )}
           </div>
         </Card>
 
