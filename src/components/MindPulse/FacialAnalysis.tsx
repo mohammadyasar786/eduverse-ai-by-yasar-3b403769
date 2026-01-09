@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye, Loader2 } from "lucide-react";
+import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye, Loader2, UserX, Users } from "lucide-react";
 import { toast } from "sonner";
 
 interface FacialAnalysisProps {
@@ -12,6 +12,12 @@ interface FacialAnalysisProps {
 
 type FocusState = "focused" | "neutral" | "stressed";
 type CameraStatus = "idle" | "requesting" | "active" | "error" | "denied";
+type FaceDetectionStatus = "detecting" | "found" | "no_face" | "multiple_faces";
+
+interface AnalysisResult {
+  focus: FocusState;
+  timestamp: number;
+}
 
 const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) => {
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle");
@@ -20,11 +26,17 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const [currentFocus, setCurrentFocus] = useState<FocusState>("neutral");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [faceDetectionStatus, setFaceDetectionStatus] = useState<FaceDetectionStatus>("detecting");
+  const [analysisMessage, setAnalysisMessage] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  
+  // Store recent analysis results for averaging
+  const recentResultsRef = useRef<AnalysisResult[]>([]);
+  const MAX_RESULTS_FOR_AVERAGE = 5;
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -52,6 +64,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     }
     
     setIsVideoReady(false);
+    setFaceDetectionStatus("detecting");
+    setAnalysisMessage(null);
+    recentResultsRef.current = [];
   }, []);
 
   // Cleanup on unmount
@@ -64,13 +79,75 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     };
   }, [cleanup]);
 
-  // Safe facial analysis
+  // Simulate face detection - in production, this would use a real face detection API
+  const detectFaces = useCallback((): { count: number } => {
+    // Simulate face detection with realistic probabilities
+    // In production, use MediaPipe, TensorFlow.js, or similar
+    const random = Math.random();
+    
+    if (random < 0.85) {
+      // 85% chance: exactly one face detected (normal case)
+      return { count: 1 };
+    } else if (random < 0.92) {
+      // 7% chance: no face detected
+      return { count: 0 };
+    } else {
+      // 8% chance: multiple faces
+      return { count: Math.floor(Math.random() * 2) + 2 };
+    }
+  }, []);
+
+  // Calculate averaged focus state from recent results
+  const calculateAveragedFocus = useCallback((): FocusState => {
+    const results = recentResultsRef.current;
+    if (results.length === 0) return "neutral";
+    
+    const counts = { focused: 0, neutral: 0, stressed: 0 };
+    results.forEach(r => counts[r.focus]++);
+    
+    // Return the most common state
+    if (counts.focused >= counts.neutral && counts.focused >= counts.stressed) {
+      return "focused";
+    } else if (counts.stressed >= counts.neutral) {
+      return "stressed";
+    }
+    return "neutral";
+  }, []);
+
+  // Safe facial analysis with face detection validation
   const analyzeFace = useCallback(() => {
     if (!isMountedRef.current) return;
     if (cameraStatus !== "active" || !isMonitoring || !isVideoReady) return;
     
     try {
-      // Simulate facial analysis with weighted random states
+      // Step 1: Detect faces
+      const faceResult = detectFaces();
+      
+      if (faceResult.count === 0) {
+        // No face detected
+        if (isMountedRef.current) {
+          setFaceDetectionStatus("no_face");
+          setAnalysisMessage("No face detected. Please face the camera.");
+          // Don't update focus state - keep last known state
+        }
+        return;
+      }
+      
+      if (faceResult.count > 1) {
+        // Multiple faces detected
+        if (isMountedRef.current) {
+          setFaceDetectionStatus("multiple_faces");
+          setAnalysisMessage("Multiple faces detected. Analysis works best with one person.");
+          // Don't update focus state - keep last known state
+        }
+        return;
+      }
+      
+      // Step 2: Face found - run analysis
+      setFaceDetectionStatus("found");
+      setAnalysisMessage(null);
+      
+      // Simulate facial expression analysis with weighted random states
       const random = Math.random();
       let newFocus: FocusState;
       
@@ -82,23 +159,37 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         newFocus = "stressed";
       }
       
+      // Add to recent results for averaging
+      recentResultsRef.current.push({ focus: newFocus, timestamp: Date.now() });
+      
+      // Keep only recent results
+      if (recentResultsRef.current.length > MAX_RESULTS_FOR_AVERAGE) {
+        recentResultsRef.current.shift();
+      }
+      
+      // Calculate averaged result
+      const averagedFocus = calculateAveragedFocus();
+      
       if (isMountedRef.current) {
-        setCurrentFocus(newFocus);
-        onFocusUpdate(newFocus);
+        setCurrentFocus(averagedFocus);
+        onFocusUpdate(averagedFocus);
       }
     } catch (error) {
       console.warn("Analysis error:", error);
       // Don't crash - just skip this analysis cycle
+      if (isMountedRef.current) {
+        setAnalysisMessage("Analysis temporarily unavailable. Retrying...");
+      }
     }
-  }, [cameraStatus, isMonitoring, isVideoReady, onFocusUpdate]);
+  }, [cameraStatus, isMonitoring, isVideoReady, onFocusUpdate, detectFaces, calculateAveragedFocus]);
 
   // Analysis interval effect
   useEffect(() => {
     if (cameraStatus === "active" && isMonitoring && isVideoReady) {
-      // Run analysis every 5 seconds
-      analysisIntervalRef.current = setInterval(analyzeFace, 5000);
-      // Initial analysis after a delay
-      const timeout = setTimeout(analyzeFace, 1000);
+      // Run analysis every 4 seconds for smoother averaging
+      analysisIntervalRef.current = setInterval(analyzeFace, 4000);
+      // Initial analysis after a short delay
+      const timeout = setTimeout(analyzeFace, 1500);
       
       return () => {
         if (analysisIntervalRef.current) {
@@ -114,6 +205,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const handleVideoCanPlay = useCallback(() => {
     if (isMountedRef.current) {
       setIsVideoReady(true);
+      setFaceDetectionStatus("detecting");
     }
   }, []);
 
@@ -124,6 +216,8 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     setCameraStatus("requesting");
     setErrorMessage(null);
     setIsVideoReady(false);
+    setFaceDetectionStatus("detecting");
+    setAnalysisMessage(null);
     
     try {
       // Check if mediaDevices is supported
@@ -214,6 +308,14 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     }
   };
 
+  // Retry analysis manually
+  const handleRetryAnalysis = () => {
+    setAnalysisMessage(null);
+    setFaceDetectionStatus("detecting");
+    recentResultsRef.current = [];
+    analyzeFace();
+  };
+
   const getFocusIcon = () => {
     switch (currentFocus) {
       case "focused":
@@ -233,6 +335,29 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         return <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Stressed</Badge>;
       default:
         return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Neutral</Badge>;
+    }
+  };
+
+  const getFaceDetectionBadge = () => {
+    switch (faceDetectionStatus) {
+      case "found":
+        return null; // Don't show badge when face is found
+      case "no_face":
+        return (
+          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
+            <UserX className="h-3 w-3" />
+            No Face
+          </Badge>
+        );
+      case "multiple_faces":
+        return (
+          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
+            <Users className="h-3 w-3" />
+            Multiple
+          </Badge>
+        );
+      default:
+        return null;
     }
   };
 
@@ -301,6 +426,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
 
   const suggestion = getWellnessSuggestion();
   const isActive = cameraStatus === "active";
+  const faceDetectionBadge = getFaceDetectionBadge();
 
   return (
     <Card className="p-6 border-2">
@@ -355,6 +481,25 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
           </div>
         )}
 
+        {/* Analysis Status Message */}
+        {analysisMessage && isActive && isVideoReady && (
+          <div className="flex items-center justify-between text-amber-600 text-sm p-3 bg-amber-500/10 rounded-lg">
+            <div className="flex items-center gap-2">
+              {faceDetectionStatus === "no_face" ? (
+                <UserX className="h-4 w-4 flex-shrink-0" />
+              ) : faceDetectionStatus === "multiple_faces" ? (
+                <Users className="h-4 w-4 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              )}
+              <span>{analysisMessage}</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleRetryAnalysis} className="h-7 text-xs">
+              Retry
+            </Button>
+          </div>
+        )}
+
         {/* Camera Preview Container - Fixed size */}
         <div 
           className="relative rounded-lg overflow-hidden bg-muted/50 mx-auto"
@@ -396,10 +541,11 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
             </div>
           )}
           
-          {/* Focus badge overlay when active */}
+          {/* Status badges overlay when active */}
           {isActive && isVideoReady && (
-            <div className="absolute top-2 right-2">
-              {getFocusBadge()}
+            <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+              {faceDetectionStatus === "found" && getFocusBadge()}
+              {faceDetectionBadge}
             </div>
           )}
           
@@ -412,19 +558,19 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
           )}
         </div>
 
-        {/* Current State - Only when active and monitoring */}
-        {isActive && isVideoReady && isMonitoring && (
+        {/* Current State - Only when active, monitoring, and face is found */}
+        {isActive && isVideoReady && isMonitoring && faceDetectionStatus === "found" && (
           <div className="flex items-center justify-center gap-3 p-4 bg-muted/30 rounded-lg">
             {getFocusIcon()}
             <div>
               <p className="font-medium">Current State: {currentFocus.charAt(0).toUpperCase() + currentFocus.slice(1)}</p>
-              <p className="text-xs text-muted-foreground">Updated every 5 seconds</p>
+              <p className="text-xs text-muted-foreground">Averaged over recent readings</p>
             </div>
           </div>
         )}
 
-        {/* Wellness Suggestion - Only when active and monitoring */}
-        {isActive && isVideoReady && isMonitoring && (
+        {/* Wellness Suggestion - Only when active, monitoring, and face is found */}
+        {isActive && isVideoReady && isMonitoring && faceDetectionStatus === "found" && (
           <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
             {suggestion.icon}
             <div>

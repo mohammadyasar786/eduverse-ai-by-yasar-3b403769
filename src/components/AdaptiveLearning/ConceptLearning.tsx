@@ -10,6 +10,7 @@ import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import AdaptivePractice from "./AdaptivePractice";
 import NPTELSuggestion from "./NPTELSuggestion";
 import InteractiveVisuals from "./InteractiveVisuals";
+import FacultyResearchContent from "./FacultyResearchContent";
 import type { LearningProfile, ConceptProgress } from "@/pages/AdaptiveLearning";
 
 interface ConceptLearningProps {
@@ -212,6 +213,9 @@ const ConceptLearning = ({
 
       {/* Interactive Visual Diagram */}
       <InteractiveVisuals conceptId={conceptId} />
+
+      {/* Faculty and Research Expert Content */}
+      <FacultyResearchContent conceptId={conceptId} />
 
       {/* Optional NPTEL Academic Video */}
       <NPTELSuggestion conceptId={conceptId} conceptTitle={concept?.title || ""} />
