@@ -2,8 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye } from "lucide-react";
+import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface FacialAnalysisProps {
@@ -12,98 +11,203 @@ interface FacialAnalysisProps {
 }
 
 type FocusState = "focused" | "neutral" | "stressed";
+type CameraStatus = "idle" | "requesting" | "active" | "error" | "denied";
 
 const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) => {
-  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle");
   const [hasConsent, setHasConsent] = useState(false);
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const [currentFocus, setCurrentFocus] = useState<FocusState>("neutral");
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Simulated facial analysis (in production, would use TensorFlow.js or face-api.js)
-  const analyzeFace = useCallback(() => {
-    if (!cameraEnabled || !isMonitoring) return;
-    
-    // Simulate facial analysis with weighted random states
-    const random = Math.random();
-    let newFocus: FocusState;
-    
-    if (random < 0.5) {
-      newFocus = "focused";
-    } else if (random < 0.8) {
-      newFocus = "neutral";
-    } else {
-      newFocus = "stressed";
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    // Stop analysis interval
+    if (analysisIntervalRef.current) {
+      clearInterval(analysisIntervalRef.current);
+      analysisIntervalRef.current = null;
     }
-    
-    setCurrentFocus(newFocus);
-    onFocusUpdate(newFocus);
-  }, [cameraEnabled, isMonitoring, onFocusUpdate]);
 
-  useEffect(() => {
-    if (cameraEnabled && isMonitoring) {
-      // Run analysis every 5 seconds
-      analysisIntervalRef.current = setInterval(analyzeFace, 5000);
-      analyzeFace(); // Initial analysis
-    }
-    
-    return () => {
-      if (analysisIntervalRef.current) {
-        clearInterval(analysisIntervalRef.current);
-      }
-    };
-  }, [cameraEnabled, isMonitoring, analyzeFace]);
-
-  const requestCameraAccess = async () => {
-    try {
-      setCameraError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: 320, height: 240 } 
-      });
-      
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-      
-      setCameraEnabled(true);
-      toast.success("Camera enabled for wellness monitoring");
-    } catch (error) {
-      console.error("Camera access error:", error);
-      setCameraError("Unable to access camera. Please check permissions.");
-      toast.error("Camera access denied");
-    }
-  };
-
-  const disableCamera = () => {
+    // Stop camera stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      try {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
+      } catch (e) {
+        console.warn("Error stopping camera tracks:", e);
+      }
       streamRef.current = null;
     }
-    
+
+    // Clear video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     
-    setCameraEnabled(false);
-    setCurrentFocus("neutral");
-    toast.info("Camera disabled");
+    setIsVideoReady(false);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+      cleanup();
+    };
+  }, [cleanup]);
+
+  // Safe facial analysis
+  const analyzeFace = useCallback(() => {
+    if (!isMountedRef.current) return;
+    if (cameraStatus !== "active" || !isMonitoring || !isVideoReady) return;
+    
+    try {
+      // Simulate facial analysis with weighted random states
+      const random = Math.random();
+      let newFocus: FocusState;
+      
+      if (random < 0.5) {
+        newFocus = "focused";
+      } else if (random < 0.8) {
+        newFocus = "neutral";
+      } else {
+        newFocus = "stressed";
+      }
+      
+      if (isMountedRef.current) {
+        setCurrentFocus(newFocus);
+        onFocusUpdate(newFocus);
+      }
+    } catch (error) {
+      console.warn("Analysis error:", error);
+      // Don't crash - just skip this analysis cycle
+    }
+  }, [cameraStatus, isMonitoring, isVideoReady, onFocusUpdate]);
+
+  // Analysis interval effect
+  useEffect(() => {
+    if (cameraStatus === "active" && isMonitoring && isVideoReady) {
+      // Run analysis every 5 seconds
+      analysisIntervalRef.current = setInterval(analyzeFace, 5000);
+      // Initial analysis after a delay
+      const timeout = setTimeout(analyzeFace, 1000);
+      
+      return () => {
+        if (analysisIntervalRef.current) {
+          clearInterval(analysisIntervalRef.current);
+          analysisIntervalRef.current = null;
+        }
+        clearTimeout(timeout);
+      };
+    }
+  }, [cameraStatus, isMonitoring, isVideoReady, analyzeFace]);
+
+  // Handle video element ready
+  const handleVideoCanPlay = useCallback(() => {
+    if (isMountedRef.current) {
+      setIsVideoReady(true);
+    }
+  }, []);
+
+  // Request camera access
+  const requestCameraAccess = async () => {
+    if (!isMountedRef.current) return;
+    
+    setCameraStatus("requesting");
+    setErrorMessage(null);
+    setIsVideoReady(false);
+    
+    try {
+      // Check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera not supported on this device.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user", 
+          width: { ideal: 320 }, 
+          height: { ideal: 240 } 
+        } 
+      });
+      
+      if (!isMountedRef.current) {
+        // Component unmounted during request - cleanup
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current && isMountedRef.current) {
+            videoRef.current.play().catch(e => {
+              console.warn("Video play error:", e);
+            });
+          }
+        };
+      }
+      
+      setCameraStatus("active");
+      toast.success("Camera enabled for wellness monitoring");
+    } catch (error: any) {
+      console.warn("Camera access error:", error);
+      
+      if (!isMountedRef.current) return;
+      
+      let message = "Camera access not enabled.";
+      
+      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+        message = "Camera permission denied. You can enable it in your browser settings.";
+        setCameraStatus("denied");
+      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+        message = "No camera found on this device.";
+        setCameraStatus("error");
+      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+        message = "Camera is in use by another application.";
+        setCameraStatus("error");
+      } else if (error.message) {
+        message = error.message;
+        setCameraStatus("error");
+      } else {
+        setCameraStatus("error");
+      }
+      
+      setErrorMessage(message);
+    }
   };
 
+  // Disable camera
+  const disableCamera = useCallback(() => {
+    cleanup();
+    setCameraStatus("idle");
+    setCurrentFocus("neutral");
+    setErrorMessage(null);
+    toast.info("Camera disabled");
+  }, [cleanup]);
+
+  // Handle consent grant
   const handleConsentGrant = () => {
     setHasConsent(true);
     setShowConsentDialog(false);
     requestCameraAccess();
   };
 
-  const handleToggleCamera = () => {
-    if (cameraEnabled) {
-      disableCamera();
-    } else if (hasConsent) {
+  // Handle enable camera button click
+  const handleEnableCamera = () => {
+    if (hasConsent) {
       requestCameraAccess();
     } else {
       setShowConsentDialog(true);
@@ -113,9 +217,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const getFocusIcon = () => {
     switch (currentFocus) {
       case "focused":
-        return <Eye className="h-5 w-5 text-success" />;
+        return <Eye className="h-5 w-5 text-green-500" />;
       case "stressed":
-        return <Frown className="h-5 w-5 text-destructive" />;
+        return <Frown className="h-5 w-5 text-red-500" />;
       default:
         return <Meh className="h-5 w-5 text-amber-500" />;
     }
@@ -124,9 +228,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const getFocusBadge = () => {
     switch (currentFocus) {
       case "focused":
-        return <Badge className="bg-success/10 text-success border-success/20">Focused</Badge>;
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Focused</Badge>;
       case "stressed":
-        return <Badge className="bg-destructive/10 text-destructive border-destructive/20">Stressed</Badge>;
+        return <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Stressed</Badge>;
       default:
         return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Neutral</Badge>;
     }
@@ -136,7 +240,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     switch (currentFocus) {
       case "stressed":
         return {
-          icon: <Wind className="h-5 w-5 text-info" />,
+          icon: <Wind className="h-5 w-5 text-blue-500" />,
           title: "Take a breather",
           message: "Try deep breathing: Inhale 4 seconds, hold 4, exhale 4"
         };
@@ -148,7 +252,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         };
       default:
         return {
-          icon: <Smile className="h-5 w-5 text-success" />,
+          icon: <Smile className="h-5 w-5 text-green-500" />,
           title: "Great focus!",
           message: "You're in the zone. Keep up the excellent work!"
         };
@@ -171,7 +275,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
           
           <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2 max-w-md mx-auto">
             <h4 className="font-semibold flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-info" />
+              <AlertCircle className="h-4 w-4 text-blue-500" />
               Privacy Guarantee
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
@@ -186,7 +290,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
             <Button variant="outline" onClick={() => setShowConsentDialog(false)}>
               No Thanks
             </Button>
-            <Button onClick={handleConsentGrant} className="gradient-primary text-primary-foreground">
+            <Button onClick={handleConsentGrant} className="bg-primary text-primary-foreground">
               Enable Camera
             </Button>
           </div>
@@ -196,15 +300,16 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   }
 
   const suggestion = getWellnessSuggestion();
+  const isActive = cameraStatus === "active";
 
   return (
     <Card className="p-6 border-2">
       <div className="space-y-4">
-        {/* Header with toggle */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {cameraEnabled ? (
-              <Camera className="h-5 w-5 text-success" />
+            {isActive ? (
+              <Camera className="h-5 w-5 text-green-500" />
             ) : (
               <CameraOff className="h-5 w-5 text-muted-foreground" />
             )}
@@ -213,63 +318,128 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
               <p className="text-xs text-muted-foreground">Optional wellness monitoring</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {cameraEnabled ? "On" : "Off"}
-            </span>
-            <Switch
-              checked={cameraEnabled}
-              onCheckedChange={handleToggleCamera}
-            />
-          </div>
+          
+          {/* Enable/Disable Button */}
+          {isActive ? (
+            <Button variant="outline" size="sm" onClick={disableCamera}>
+              <CameraOff className="h-4 w-4 mr-2" />
+              Disable Camera
+            </Button>
+          ) : (
+            <Button 
+              size="sm" 
+              onClick={handleEnableCamera}
+              disabled={cameraStatus === "requesting"}
+              className="bg-primary text-primary-foreground"
+            >
+              {cameraStatus === "requesting" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Enable MindPulse Camera
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
-        {/* Camera Error */}
-        {cameraError && (
-          <div className="flex items-center gap-2 text-destructive text-sm p-3 bg-destructive/10 rounded-lg">
-            <AlertCircle className="h-4 w-4" />
-            {cameraError}
+        {/* Error Message */}
+        {errorMessage && (
+          <div className="flex items-center gap-2 text-amber-600 text-sm p-3 bg-amber-500/10 rounded-lg">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Camera Preview & Analysis */}
-        {cameraEnabled && (
-          <div className="space-y-4">
-            {/* Hidden video element for camera stream */}
-            <div className="relative rounded-lg overflow-hidden bg-muted/50 aspect-video max-w-[320px] mx-auto">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 right-2">
-                {getFocusBadge()}
-              </div>
+        {/* Camera Preview Container - Fixed size */}
+        <div 
+          className="relative rounded-lg overflow-hidden bg-muted/50 mx-auto"
+          style={{ width: "320px", height: "240px" }}
+        >
+          {/* Video Element - Always present but hidden when not active */}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            onCanPlay={handleVideoCanPlay}
+            className={`w-full h-full object-cover ${isActive ? "block" : "hidden"}`}
+          />
+          
+          {/* Placeholder when camera is idle */}
+          {cameraStatus === "idle" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <CameraOff className="h-12 w-12 mb-2 opacity-50" />
+              <p className="text-sm">Camera not enabled</p>
             </div>
+          )}
+          
+          {/* Loading state */}
+          {cameraStatus === "requesting" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <Loader2 className="h-12 w-12 mb-2 animate-spin" />
+              <p className="text-sm">Starting camera…</p>
+            </div>
+          )}
+          
+          {/* Error/Denied state */}
+          {(cameraStatus === "error" || cameraStatus === "denied") && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mb-2 opacity-50" />
+              <p className="text-sm text-center px-4">
+                {cameraStatus === "denied" ? "Permission denied" : "Camera unavailable"}
+              </p>
+            </div>
+          )}
+          
+          {/* Focus badge overlay when active */}
+          {isActive && isVideoReady && (
+            <div className="absolute top-2 right-2">
+              {getFocusBadge()}
+            </div>
+          )}
+          
+          {/* Video loading indicator */}
+          {isActive && !isVideoReady && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80">
+              <Loader2 className="h-8 w-8 mb-2 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Loading camera...</p>
+            </div>
+          )}
+        </div>
 
-            {/* Current State */}
-            {isMonitoring && (
-              <div className="flex items-center justify-center gap-3 p-4 bg-muted/30 rounded-lg">
-                {getFocusIcon()}
-                <div>
-                  <p className="font-medium">Current State: {currentFocus.charAt(0).toUpperCase() + currentFocus.slice(1)}</p>
-                  <p className="text-xs text-muted-foreground">Updated every 5 seconds</p>
-                </div>
-              </div>
-            )}
+        {/* Current State - Only when active and monitoring */}
+        {isActive && isVideoReady && isMonitoring && (
+          <div className="flex items-center justify-center gap-3 p-4 bg-muted/30 rounded-lg">
+            {getFocusIcon()}
+            <div>
+              <p className="font-medium">Current State: {currentFocus.charAt(0).toUpperCase() + currentFocus.slice(1)}</p>
+              <p className="text-xs text-muted-foreground">Updated every 5 seconds</p>
+            </div>
+          </div>
+        )}
 
-            {/* Wellness Suggestion */}
-            {isMonitoring && (
-              <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
-                {suggestion.icon}
-                <div>
-                  <p className="font-medium text-sm">{suggestion.title}</p>
-                  <p className="text-xs text-muted-foreground">{suggestion.message}</p>
-                </div>
-              </div>
-            )}
+        {/* Wellness Suggestion - Only when active and monitoring */}
+        {isActive && isVideoReady && isMonitoring && (
+          <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
+            {suggestion.icon}
+            <div>
+              <p className="font-medium text-sm">{suggestion.title}</p>
+              <p className="text-xs text-muted-foreground">{suggestion.message}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Not monitoring hint */}
+        {isActive && isVideoReady && !isMonitoring && (
+          <div className="text-center p-4 bg-muted/30 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Start monitoring above to begin facial analysis
+            </p>
           </div>
         )}
 
