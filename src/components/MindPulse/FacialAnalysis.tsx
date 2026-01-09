@@ -2,8 +2,15 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye, Loader2, UserX, Users } from "lucide-react";
+import { Camera, CameraOff, AlertCircle, Smile, Frown, Meh, Wind, Coffee, Eye, Loader2, UserX, Users, Brain } from "lucide-react";
 import { toast } from "sonner";
+import { 
+  initializeDetector, 
+  disposeDetector, 
+  analyzeFace as analyzeWithTensorFlow,
+  isDetectorReady,
+  isDetectorInitializing
+} from "@/lib/faceAnalysis";
 
 interface FacialAnalysisProps {
   onFocusUpdate: (focus: "focused" | "neutral" | "stressed") => void;
@@ -13,6 +20,7 @@ interface FacialAnalysisProps {
 type FocusState = "focused" | "neutral" | "stressed";
 type CameraStatus = "idle" | "requesting" | "active" | "error" | "denied";
 type FaceDetectionStatus = "detecting" | "found" | "no_face" | "multiple_faces";
+type ModelStatus = "idle" | "loading" | "ready" | "error";
 
 interface AnalysisResult {
   focus: FocusState;
@@ -21,6 +29,7 @@ interface AnalysisResult {
 
 const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) => {
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>("idle");
+  const [modelStatus, setModelStatus] = useState<ModelStatus>("idle");
   const [hasConsent, setHasConsent] = useState(false);
   const [showConsentDialog, setShowConsentDialog] = useState(false);
   const [currentFocus, setCurrentFocus] = useState<FocusState>("neutral");
@@ -76,24 +85,27 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     return () => {
       isMountedRef.current = false;
       cleanup();
+      // Dispose TensorFlow detector
+      disposeDetector();
     };
   }, [cleanup]);
 
-  // Simulate face detection - in production, this would use a real face detection API
-  const detectFaces = useCallback((): { count: number } => {
-    // Simulate face detection with realistic probabilities
-    // In production, use MediaPipe, TensorFlow.js, or similar
-    const random = Math.random();
+  // Initialize TensorFlow model
+  const initializeModel = useCallback(async () => {
+    if (isDetectorReady() || isDetectorInitializing()) return;
     
-    if (random < 0.85) {
-      // 85% chance: exactly one face detected (normal case)
-      return { count: 1 };
-    } else if (random < 0.92) {
-      // 7% chance: no face detected
-      return { count: 0 };
-    } else {
-      // 8% chance: multiple faces
-      return { count: Math.floor(Math.random() * 2) + 2 };
+    setModelStatus("loading");
+    try {
+      await initializeDetector();
+      if (isMountedRef.current) {
+        setModelStatus("ready");
+      }
+    } catch (error) {
+      console.error("Failed to initialize TensorFlow model:", error);
+      if (isMountedRef.current) {
+        setModelStatus("error");
+        setErrorMessage("Failed to load AI model. Please refresh and try again.");
+      }
     }
   }, []);
 
@@ -114,53 +126,36 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     return "neutral";
   }, []);
 
-  // Safe facial analysis with face detection validation
-  const analyzeFace = useCallback(() => {
+  // Real facial analysis with TensorFlow.js
+  const analyzeFace = useCallback(async () => {
     if (!isMountedRef.current) return;
     if (cameraStatus !== "active" || !isMonitoring || !isVideoReady) return;
+    if (!videoRef.current) return;
+    if (modelStatus !== "ready") return;
     
     try {
-      // Step 1: Detect faces
-      const faceResult = detectFaces();
+      const result = await analyzeWithTensorFlow(videoRef.current);
       
-      if (faceResult.count === 0) {
-        // No face detected
-        if (isMountedRef.current) {
-          setFaceDetectionStatus("no_face");
-          setAnalysisMessage("No face detected. Please face the camera.");
-          // Don't update focus state - keep last known state
-        }
+      if (!result || !isMountedRef.current) return;
+
+      if (result.faceCount === 0) {
+        setFaceDetectionStatus("no_face");
+        setAnalysisMessage("No face detected. Please face the camera.");
         return;
       }
       
-      if (faceResult.count > 1) {
-        // Multiple faces detected
-        if (isMountedRef.current) {
-          setFaceDetectionStatus("multiple_faces");
-          setAnalysisMessage("Multiple faces detected. Analysis works best with one person.");
-          // Don't update focus state - keep last known state
-        }
+      if (result.faceCount > 1) {
+        setFaceDetectionStatus("multiple_faces");
+        setAnalysisMessage("Multiple faces detected. Analysis works best with one person.");
         return;
       }
       
-      // Step 2: Face found - run analysis
+      // Face found - update state
       setFaceDetectionStatus("found");
       setAnalysisMessage(null);
       
-      // Simulate facial expression analysis with weighted random states
-      const random = Math.random();
-      let newFocus: FocusState;
-      
-      if (random < 0.5) {
-        newFocus = "focused";
-      } else if (random < 0.8) {
-        newFocus = "neutral";
-      } else {
-        newFocus = "stressed";
-      }
-      
       // Add to recent results for averaging
-      recentResultsRef.current.push({ focus: newFocus, timestamp: Date.now() });
+      recentResultsRef.current.push({ focus: result.focusState, timestamp: Date.now() });
       
       // Keep only recent results
       if (recentResultsRef.current.length > MAX_RESULTS_FOR_AVERAGE) {
@@ -176,20 +171,19 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
       }
     } catch (error) {
       console.warn("Analysis error:", error);
-      // Don't crash - just skip this analysis cycle
       if (isMountedRef.current) {
         setAnalysisMessage("Analysis temporarily unavailable. Retrying...");
       }
     }
-  }, [cameraStatus, isMonitoring, isVideoReady, onFocusUpdate, detectFaces, calculateAveragedFocus]);
+  }, [cameraStatus, isMonitoring, isVideoReady, modelStatus, onFocusUpdate, calculateAveragedFocus]);
 
   // Analysis interval effect
   useEffect(() => {
-    if (cameraStatus === "active" && isMonitoring && isVideoReady) {
-      // Run analysis every 4 seconds for smoother averaging
-      analysisIntervalRef.current = setInterval(analyzeFace, 4000);
+    if (cameraStatus === "active" && isMonitoring && isVideoReady && modelStatus === "ready") {
+      // Run analysis every 500ms for smooth real-time feedback
+      analysisIntervalRef.current = setInterval(analyzeFace, 500);
       // Initial analysis after a short delay
-      const timeout = setTimeout(analyzeFace, 1500);
+      const timeout = setTimeout(analyzeFace, 500);
       
       return () => {
         if (analysisIntervalRef.current) {
@@ -199,7 +193,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         clearTimeout(timeout);
       };
     }
-  }, [cameraStatus, isMonitoring, isVideoReady, analyzeFace]);
+  }, [cameraStatus, isMonitoring, isVideoReady, modelStatus, analyzeFace]);
 
   // Handle video element ready
   const handleVideoCanPlay = useCallback(() => {
@@ -218,6 +212,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     setIsVideoReady(false);
     setFaceDetectionStatus("detecting");
     setAnalysisMessage(null);
+    
+    // Start loading the TensorFlow model in parallel
+    initializeModel();
     
     try {
       // Check if mediaDevices is supported
@@ -255,7 +252,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
       }
       
       setCameraStatus("active");
-      toast.success("Camera enabled for wellness monitoring");
+      toast.success("Camera enabled for AI-powered wellness monitoring");
     } catch (error: any) {
       console.warn("Camera access error:", error);
       
@@ -392,9 +389,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
           <div className="inline-flex p-4 rounded-full bg-primary/10">
             <Camera className="h-8 w-8 text-primary" />
           </div>
-          <h3 className="text-xl font-bold">Enable Camera for Wellness Monitoring?</h3>
+          <h3 className="text-xl font-bold">Enable AI-Powered Wellness Monitoring?</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            MindPulse can use your camera to analyze facial expressions and provide 
+            MindPulse uses TensorFlow.js to analyze facial landmarks and provide 
             real-time focus and stress feedback. This helps personalize your learning experience.
           </p>
           
@@ -405,9 +402,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
               <li>No images or video are stored or transmitted</li>
-              <li>All processing happens locally on your device</li>
+              <li>All AI processing happens locally on your device</li>
+              <li>Uses industry-standard TensorFlow.js face mesh detection</li>
               <li>You can disable the camera at any time</li>
-              <li>Camera access is completely optional</li>
             </ul>
           </div>
           
@@ -440,8 +437,14 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
               <CameraOff className="h-5 w-5 text-muted-foreground" />
             )}
             <div>
-              <h3 className="font-semibold">Facial Expression Analysis</h3>
-              <p className="text-xs text-muted-foreground">Optional wellness monitoring</p>
+              <h3 className="font-semibold flex items-center gap-2">
+                AI Facial Analysis
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Brain className="h-3 w-3" />
+                  TensorFlow.js
+                </Badge>
+              </h3>
+              <p className="text-xs text-muted-foreground">Real-time wellness monitoring</p>
             </div>
           </div>
           
@@ -466,12 +469,20 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
               ) : (
                 <>
                   <Camera className="h-4 w-4 mr-2" />
-                  Enable MindPulse Camera
+                  Enable AI Camera
                 </>
               )}
             </Button>
           )}
         </div>
+
+        {/* Model Loading Status */}
+        {modelStatus === "loading" && (
+          <div className="flex items-center gap-2 text-primary text-sm p-3 bg-primary/10 rounded-lg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading AI model... This may take a few seconds.</span>
+          </div>
+        )}
 
         {/* Error Message */}
         {errorMessage && (
@@ -556,21 +567,29 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
               <p className="text-sm text-muted-foreground">Loading camera...</p>
             </div>
           )}
+          
+          {/* Model loading overlay */}
+          {isActive && isVideoReady && modelStatus === "loading" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/80">
+              <Brain className="h-8 w-8 mb-2 animate-pulse text-primary" />
+              <p className="text-sm text-muted-foreground">Loading AI model...</p>
+            </div>
+          )}
         </div>
 
         {/* Current State - Only when active, monitoring, and face is found */}
-        {isActive && isVideoReady && isMonitoring && faceDetectionStatus === "found" && (
+        {isActive && isVideoReady && isMonitoring && modelStatus === "ready" && faceDetectionStatus === "found" && (
           <div className="flex items-center justify-center gap-3 p-4 bg-muted/30 rounded-lg">
             {getFocusIcon()}
             <div>
               <p className="font-medium">Current State: {currentFocus.charAt(0).toUpperCase() + currentFocus.slice(1)}</p>
-              <p className="text-xs text-muted-foreground">Averaged over recent readings</p>
+              <p className="text-xs text-muted-foreground">AI-powered real-time analysis</p>
             </div>
           </div>
         )}
 
         {/* Wellness Suggestion - Only when active, monitoring, and face is found */}
-        {isActive && isVideoReady && isMonitoring && faceDetectionStatus === "found" && (
+        {isActive && isVideoReady && isMonitoring && modelStatus === "ready" && faceDetectionStatus === "found" && (
           <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-lg border border-primary/10">
             {suggestion.icon}
             <div>
@@ -581,17 +600,17 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         )}
 
         {/* Not monitoring hint */}
-        {isActive && isVideoReady && !isMonitoring && (
+        {isActive && isVideoReady && !isMonitoring && modelStatus === "ready" && (
           <div className="text-center p-4 bg-muted/30 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              Start monitoring above to begin facial analysis
+              Start monitoring above to begin AI facial analysis
             </p>
           </div>
         )}
 
         {/* Privacy Note */}
         <p className="text-xs text-muted-foreground text-center">
-          🔒 All analysis is done locally. No data is stored or shared.
+          🔒 All AI analysis runs locally using TensorFlow.js. No data leaves your device.
         </p>
       </div>
     </Card>
