@@ -276,15 +276,6 @@ const ProgressBoard = () => {
               </p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSettings(!showSettings)}
-            className="gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Privacy
-          </Button>
         </div>
 
         {/* Privacy Settings Panel */}

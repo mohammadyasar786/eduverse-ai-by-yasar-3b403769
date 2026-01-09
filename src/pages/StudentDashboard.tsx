@@ -6,9 +6,13 @@ import { useUserRole } from "@/hooks/useUserRole";
 import DiagnosticOnboarding from "@/components/AdaptiveLearning/DiagnosticOnboarding";
 import ChapterView from "@/components/AdaptiveLearning/ChapterView";
 import ConceptLearning from "@/components/AdaptiveLearning/ConceptLearning";
+import AIQuizSection from "@/components/AdaptiveLearning/AIQuizSection";
+import StudentTimetable from "@/components/Dashboard/StudentTimetable";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AIVAButton } from "@/components/AIVA";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookOpen, Brain, Calendar, TrendingUp } from "lucide-react";
 
 export interface LearningProfile {
   diagnosticScore: number;
@@ -196,43 +200,90 @@ const StudentDashboard = () => {
       <Navigation />
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-6xl mx-auto">
-          {/* Header with chapter focus */}
+          {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  Arrays, Stacks, and Queues
-                </h1>
-                <p className="text-muted-foreground">
-                  AI-powered self-learning module • Data Structures
-                </p>
-              </div>
-            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Student Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Arrays, Stacks, and Queues • Data Structures
+            </p>
           </div>
 
-          {/* Student Learning Content */}
-          {!learningProfile ? (
-            <DiagnosticOnboarding onComplete={handleProfileComplete} />
-          ) : selectedConcept ? (
-            <ConceptLearning
-              conceptId={selectedConcept}
-              learningProfile={learningProfile}
-              progress={conceptProgress.find((p) => p.conceptId === selectedConcept)}
-              onBack={handleConceptBack}
-              onProgressUpdate={(progress) => handleProgressUpdate(selectedConcept, progress)}
-            />
-          ) : (
-            <ChapterView
-              learningProfile={learningProfile}
-              conceptProgress={conceptProgress}
-              onConceptSelect={handleConceptSelect}
-              onResetProfile={handleResetProfile}
-            />
-          )}
+          {/* Dashboard Tabs */}
+          <Tabs defaultValue="learning" className="space-y-6">
+            <TabsList className="grid w-full max-w-lg grid-cols-4">
+              <TabsTrigger value="learning" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Learning</span>
+              </TabsTrigger>
+              <TabsTrigger value="quiz" className="gap-2">
+                <Brain className="h-4 w-4" />
+                <span className="hidden sm:inline">Quiz</span>
+              </TabsTrigger>
+              <TabsTrigger value="timetable" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">Timetable</span>
+              </TabsTrigger>
+              <TabsTrigger value="progress" className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden sm:inline">Progress</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Learning Tab */}
+            <TabsContent value="learning">
+              {!learningProfile ? (
+                <DiagnosticOnboarding onComplete={handleProfileComplete} />
+              ) : selectedConcept ? (
+                <ConceptLearning
+                  conceptId={selectedConcept}
+                  learningProfile={learningProfile}
+                  progress={conceptProgress.find((p) => p.conceptId === selectedConcept)}
+                  onBack={handleConceptBack}
+                  onProgressUpdate={(progress) => handleProgressUpdate(selectedConcept, progress)}
+                />
+              ) : (
+                <ChapterView
+                  learningProfile={learningProfile}
+                  conceptProgress={conceptProgress}
+                  onConceptSelect={handleConceptSelect}
+                  onResetProfile={handleResetProfile}
+                />
+              )}
+            </TabsContent>
+
+            {/* AI Quiz Tab */}
+            <TabsContent value="quiz">
+              <AIQuizSection 
+                onQuizComplete={(score, topic) => {
+                  toast({ 
+                    title: "Quiz Completed!", 
+                    description: `You scored ${score}% on ${topic}` 
+                  });
+                }}
+              />
+            </TabsContent>
+
+            {/* Timetable Tab */}
+            <TabsContent value="timetable">
+              <StudentTimetable userId={user?.id} />
+            </TabsContent>
+
+            {/* Progress Summary Tab */}
+            <TabsContent value="progress">
+              <div className="text-center py-12 text-muted-foreground">
+                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p className="font-medium">Progress Overview</p>
+                <p className="text-sm">
+                  {conceptProgress.filter(p => p.status === "mastered").length} concepts mastered
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       
-      {/* AIVA Floating AI Companion */}
       <AIVAButton 
         context={{
           concept: selectedConcept || undefined,
