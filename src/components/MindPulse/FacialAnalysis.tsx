@@ -162,7 +162,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
          });
 
          setFaceDetectionStatus("no_face");
-         setAnalysisMessage("No face detected. Please face the camera.");
+          setAnalysisMessage(null); // Don't show notification when no face detected
          return;
        }
 
@@ -374,15 +374,6 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
 
   const getFaceDetectionBadge = () => {
     switch (faceDetectionStatus) {
-      case "found":
-        return null; // Don't show badge when face is found
-      case "no_face":
-        return (
-          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
-            <UserX className="h-3 w-3" />
-            No Face
-          </Badge>
-        );
       case "multiple_faces":
         return (
           <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1">
