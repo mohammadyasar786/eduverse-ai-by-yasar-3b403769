@@ -61,8 +61,8 @@ export async function initializeDetector(): Promise<faceLandmarksDetection.FaceL
     const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
     detector = await faceLandmarksDetection.createDetector(model, {
       runtime: "tfjs",
-      refineLandmarks: true,
-      maxFaces: 3,
+      refineLandmarks: false,
+      maxFaces: 1,
     });
     return detector;
   } finally {
@@ -230,7 +230,8 @@ export async function analyzeFace(
 
   try {
     const faces = await detector.estimateFaces(video, {
-      flipHorizontal: false,
+      flipHorizontal: true,
+      staticImageMode: false,
     });
 
     if (faces.length === 0) {
