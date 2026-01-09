@@ -146,7 +146,7 @@ const NPTELSuggestion = ({ conceptId, conceptTitle }: NPTELSuggestionProps) => {
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
             <a
               href={lecture.courseUrl}
               target="_blank"
@@ -156,8 +156,16 @@ const NPTELSuggestion = ({ conceptId, conceptTitle }: NPTELSuggestionProps) => {
             >
               Open on NPTEL ↗
             </a>
+            <a
+              href="https://leetcode.com/problems/maximum-subarray/description/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-orange-500 hover:text-orange-400 underline underline-offset-4 transition-colors"
+            >
+              Practice on LeetCode ↗
+            </a>
             <span className="text-[10px] text-muted-foreground text-right">
-              Government-certified academic resource (optional)
+              Academic & practice resources (optional)
             </span>
           </div>
         </div>
