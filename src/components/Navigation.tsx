@@ -4,18 +4,20 @@ import { Brain, BookOpen, Heart, Code, TrendingUp, Sparkles, LogOut, LayoutDashb
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import ThemeToggle from "./ThemeToggle";
-
 const Navigation = () => {
-  const { user, signOut } = useAuth();
-  const { role } = useUserRole();
+  const {
+    user,
+    signOut
+  } = useAuth();
+  const {
+    role
+  } = useUserRole();
   const navigate = useNavigate();
-
   const handleDashboardClick = () => {
     if (!user) {
       navigate("/select-role");
       return;
     }
-    
     switch (role) {
       case "student":
         navigate("/student-dashboard");
@@ -30,25 +32,37 @@ const Navigation = () => {
         navigate("/dashboard");
     }
   };
-
   const getRoleDashboardInfo = () => {
     switch (role) {
       case "student":
-        return { icon: GraduationCap, label: "Student Dashboard", href: "/student-dashboard" };
+        return {
+          icon: GraduationCap,
+          label: "Student Dashboard",
+          href: "/student-dashboard"
+        };
       case "faculty":
-        return { icon: Users, label: "Faculty Dashboard", href: "/faculty-dashboard" };
+        return {
+          icon: Users,
+          label: "Faculty Dashboard",
+          href: "/faculty-dashboard"
+        };
       case "research_expert":
-        return { icon: FlaskConical, label: "Research Dashboard", href: "/research-dashboard" };
+        return {
+          icon: FlaskConical,
+          label: "Research Dashboard",
+          href: "/research-dashboard"
+        };
       default:
-        return { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" };
+        return {
+          icon: LayoutDashboard,
+          label: "Dashboard",
+          href: "/dashboard"
+        };
     }
   };
-
   const dashboardInfo = getRoleDashboardInfo();
   const DashboardIcon = dashboardInfo.icon;
-  
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
+  return <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 group">
@@ -62,8 +76,7 @@ const Navigation = () => {
 
           {/* Show different nav items based on role */}
           <div className="hidden md:flex items-center space-x-1">
-            {role === "student" && (
-              <>
+            {role === "student" && <>
                 <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-primary hover:bg-primary/5">
                   <Link to="/tutor" className="flex items-center gap-2 rounded-3xl">
                     <Brain className="h-4 w-4" />
@@ -100,30 +113,21 @@ const Navigation = () => {
                     Progress
                   </Link>
                 </Button>
-              </>
-            )}
+              </>}
             
             {/* Show role-specific dashboard link */}
-            {user && role && (
-              <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-success hover:bg-success/5">
+            {user && role && <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-success hover:bg-success/5">
                 <Link to={dashboardInfo.href} className="flex items-center gap-2 rounded-3xl">
                   <DashboardIcon className="h-4 w-4" />
                   {role === "student" ? "Learning" : dashboardInfo.label.split(" ")[0]}
                 </Link>
-              </Button>
-            )}
+              </Button>}
           </div>
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {user ? (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleDashboardClick}
-                  className="text-foreground/70 hover:text-primary hover:bg-primary/5"
-                >
+            {user ? <>
+                <Button variant="ghost" size="sm" onClick={handleDashboardClick} className="text-foreground/70 hover:text-primary hover:bg-primary/5">
                   <DashboardIcon className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">{dashboardInfo.label.split(" ")[0]}</span>
                 </Button>
@@ -131,17 +135,12 @@ const Navigation = () => {
                   <LogOut className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
-              </>
-            ) : (
-              <Button size="sm" className="gradient-primary text-primary-foreground shadow-primary" asChild>
-                <Link to="/select-role">Get Started</Link>
-              </Button>
-            )}
+              </> : <Button size="sm" className="gradient-primary text-primary-foreground shadow-primary" asChild>
+                <Link to="/select-role" className="rounded-full">Get Started</Link>
+              </Button>}
           </div>
         </div>
       </div>
-    </nav>
-  );
+    </nav>;
 };
-
 export default Navigation;
