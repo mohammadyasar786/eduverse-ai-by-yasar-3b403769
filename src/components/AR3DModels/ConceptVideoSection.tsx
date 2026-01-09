@@ -21,7 +21,7 @@ const videoContent: Record<string, VideoData[]> = {
       id: "array-indexing",
       title: "Array Indexing & Traversal",
       description: "Learn how elements are accessed by index and how to traverse through an array sequentially.",
-      videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+      videoUrl: "/videos/array-indexing.mp4"
     },
     {
       id: "array-operations",
