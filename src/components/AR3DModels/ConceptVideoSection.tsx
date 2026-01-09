@@ -27,7 +27,7 @@ const videoContent: Record<string, VideoData[]> = {
       id: "array-operations",
       title: "Insertion & Deletion Operations",
       description: "Understand how elements are inserted and deleted, and the impact on array indices.",
-      videoUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+      videoUrl: "/videos/array-operations.mp4"
     }
   ],
   stack: [
