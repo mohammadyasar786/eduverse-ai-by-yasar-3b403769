@@ -1,9 +1,43 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const messageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(10000),
+});
+
+const chatRequestSchema = z.object({
+  messages: z.array(messageSchema).min(1).max(50),
+});
+
+async function authenticateRequest(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { user: null, error: "Missing or invalid authorization header" };
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  
+  if (error || !data?.claims) {
+    return { user: null, error: "Invalid or expired token" };
+  }
+
+  return { user: { id: data.claims.sub }, error: null };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,14 +45,34 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    // Authenticate the request
+    const { user, error: authError } = await authenticateRequest(req);
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: authError || "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate input
+    const body = await req.json();
+    const validationResult = chatRequestSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validationResult.error.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { messages } = validationResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Processing chat request with", messages.length, "messages");
+    console.log(`Processing chat request for user ${user.id} with ${messages.length} messages`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -77,7 +131,7 @@ If asked about coding, provide well-commented code examples.`
     });
   } catch (error) {
     console.error("Chat error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

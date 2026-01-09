@@ -1,9 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const messageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().max(5000),
+});
+
+const contextSchema = z.object({
+  concept: z.string().max(200).optional(),
+  recentPerformance: z.string().max(200).optional(),
+  focusLevel: z.string().max(50).optional(),
+}).optional();
+
+const performanceDataSchema = z.object({
+  wrongAnswers: z.number().min(0).max(100).optional(),
+  quizScore: z.number().min(0).max(100).optional(),
+  attempts: z.number().min(0).max(100).optional(),
+  timeSpent: z.number().min(0).optional(),
+  isInactive: z.boolean().optional(),
+  progressSpeed: z.enum(["fast", "normal", "slow"]).optional(),
+}).optional();
+
+const aivaChatSchema = z.object({
+  message: z.string().min(1).max(2000),
+  context: contextSchema,
+  learningStyle: z.enum(["visual", "analogy", "step-by-step", "formula-first"]).optional(),
+  conversationHistory: z.array(messageSchema).max(20).optional(),
+  performanceData: performanceDataSchema,
+});
+
+async function authenticateRequest(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { user: null, error: "Missing or invalid authorization header" };
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  
+  if (error || !data?.claims) {
+    return { user: null, error: "Invalid or expired token" };
+  }
+
+  return { user: { id: data.claims.sub }, error: null };
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,7 +65,27 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, learningStyle, conversationHistory, performanceData } = await req.json();
+    // Authenticate the request
+    const { user, error: authError } = await authenticateRequest(req);
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: authError || "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate input
+    const body = await req.json();
+    const validationResult = aivaChatSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validationResult.error.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { message, context, learningStyle, conversationHistory, performanceData } = validationResult.data;
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -25,7 +98,7 @@ serve(async (req) => {
     const attempts = performanceData?.attempts || 0;
     const timeSpent = performanceData?.timeSpent || 0;
     const isInactive = performanceData?.isInactive || false;
-    const progressSpeed = performanceData?.progressSpeed || "normal"; // "fast", "normal", "slow"
+    const progressSpeed = performanceData?.progressSpeed || "normal";
 
     // Determine adaptive response style
     let adaptiveStyle = "normal";
@@ -143,7 +216,7 @@ RESPONSE FORMAT:
       { role: "user", content: message }
     ];
 
-    console.log("AIVA processing message with context:", context);
+    console.log(`AIVA processing message for user ${user.id} with context:`, context);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -193,7 +266,7 @@ RESPONSE FORMAT:
   } catch (error) {
     console.error("AIVA chat error:", error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Something went wrong. Please try again." 
+      error: "Something went wrong. Please try again." 
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

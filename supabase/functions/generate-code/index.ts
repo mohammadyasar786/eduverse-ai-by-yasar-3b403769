@@ -1,9 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const codeGenSchema = z.object({
+  instruction: z.string().min(5).max(2000),
+  language: z.enum(["python", "javascript", "typescript", "java", "c", "cpp", "go", "rust"]).default("python"),
+});
+
+async function authenticateRequest(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { user: null, error: "Missing or invalid authorization header" };
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getClaims(token);
+  
+  if (error || !data?.claims) {
+    return { user: null, error: "Invalid or expired token" };
+  }
+
+  return { user: { id: data.claims.sub }, error: null };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,14 +41,34 @@ serve(async (req) => {
   }
 
   try {
-    const { instruction, language = "python" } = await req.json();
+    // Authenticate the request
+    const { user, error: authError } = await authenticateRequest(req);
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: authError || "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate input
+    const body = await req.json();
+    const validationResult = codeGenSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: validationResult.error.message }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { instruction, language } = validationResult.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Generating code for instruction:", instruction);
+    console.log(`Generating ${language} code for user ${user.id}: ${instruction.substring(0, 50)}...`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -87,7 +137,7 @@ Format your response as a complete, runnable ${language} program with:
     });
   } catch (error) {
     console.error("Code generation error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
