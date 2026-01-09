@@ -51,6 +51,9 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const noFaceStreakRef = useRef(0);
   const multiFaceStreakRef = useRef(0);
   const REQUIRED_STREAK = 3;
+  
+  // Track last notified state to avoid duplicate notifications
+  const lastNotifiedStateRef = useRef<FocusState | null>(null);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -204,6 +207,25 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
       if (isMountedRef.current) {
         setCurrentFocus(averagedFocus);
         onFocusUpdate(averagedFocus);
+        
+        // Show notification when state changes
+        if (lastNotifiedStateRef.current !== averagedFocus) {
+          lastNotifiedStateRef.current = averagedFocus;
+          
+          if (averagedFocus === "stressed") {
+            toast.warning("😟 You appear stressed. Consider taking a short break.", {
+              duration: 5000,
+            });
+          } else if (averagedFocus === "focused") {
+            toast.success("🎯 Great focus! You're in the zone.", {
+              duration: 3000,
+            });
+          } else if (averagedFocus === "neutral") {
+            toast.info("😐 Neutral state detected. Stay engaged!", {
+              duration: 3000,
+            });
+          }
+        }
       }
     } catch (error) {
       console.warn("Analysis error:", error);
@@ -580,11 +602,26 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
             </div>
           )}
           
-          {/* Status badges overlay when active */}
+        {/* Status badges overlay when active */}
           {isActive && isVideoReady && (
             <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
               {faceDetectionStatus === "found" && getFocusBadge()}
               {faceDetectionBadge}
+            </div>
+          )}
+          
+          {/* State notification overlay */}
+          {isActive && isVideoReady && modelStatus === "ready" && faceDetectionStatus === "found" && (
+            <div className={`absolute bottom-2 left-2 right-2 p-2 rounded-lg text-center text-sm font-medium transition-all ${
+              currentFocus === "stressed" 
+                ? "bg-red-500/90 text-white" 
+                : currentFocus === "focused" 
+                  ? "bg-green-500/90 text-white" 
+                  : "bg-amber-500/90 text-white"
+            }`}>
+              {currentFocus === "stressed" && "😟 Stressed - Take a break"}
+              {currentFocus === "focused" && "🎯 Focused - Great job!"}
+              {currentFocus === "neutral" && "😐 Relaxed - Stay engaged"}
             </div>
           )}
           
