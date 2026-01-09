@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useTextToSpeech } from "@/hooks/useTextToSpeech";
 import AdaptivePractice from "./AdaptivePractice";
 import NPTELSuggestion from "./NPTELSuggestion";
+import InteractiveVisuals from "./InteractiveVisuals";
 import type { LearningProfile, ConceptProgress } from "@/pages/AdaptiveLearning";
 
 interface ConceptLearningProps {
@@ -208,6 +209,9 @@ const ConceptLearning = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Interactive Visual Diagram */}
+      <InteractiveVisuals conceptId={conceptId} />
 
       {/* Optional NPTEL Academic Video */}
       <NPTELSuggestion conceptId={conceptId} conceptTitle={concept?.title || ""} />

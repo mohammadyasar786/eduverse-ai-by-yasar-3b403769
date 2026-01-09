@@ -119,7 +119,7 @@ const Navigation = () => {
             {user && role && <Button variant="ghost" size="sm" asChild className="text-foreground/70 hover:text-success hover:bg-success/5">
                 <Link to={dashboardInfo.href} className="flex items-center gap-2 rounded-3xl">
                   <DashboardIcon className="h-4 w-4" />
-                  {role === "student" ? "Learning" : dashboardInfo.label.split(" ")[0]}
+                  {role === "student" ? "Dashboard" : dashboardInfo.label.split(" ")[0]}
                 </Link>
               </Button>}
           </div>
