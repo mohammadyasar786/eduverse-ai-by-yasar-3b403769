@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
-import { BookOpen, Play, X, ClipboardCheck, Layers, ArrowRightLeft, Grid3X3 } from "lucide-react";
+import { BookOpen, Play, X, ClipboardCheck, Layers, ArrowRightLeft, Grid3X3, Video } from "lucide-react";
 import ARScene from "@/components/AR3DModels/ARScene";
 import ARQuiz from "@/components/ARQuiz";
+import ConceptVideoSection from "@/components/AR3DModels/ConceptVideoSection";
 import { toast } from "sonner";
 import { AIVAButton } from "@/components/AIVA";
 import { useLearningStreak } from "@/hooks/useLearningStreak";
@@ -243,7 +244,18 @@ const ARLearning = () => {
           </div>
         </div>
 
-        {/* How It Works */}
+        {/* Video Learning Section */}
+        <div className="mb-12 space-y-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-lg bg-info/10">
+              <Video className="h-5 w-5 text-info" />
+            </div>
+            <h2 className="text-2xl font-bold">Video Tutorials</h2>
+          </div>
+          <ConceptVideoSection topic="array" />
+          <ConceptVideoSection topic="stack" />
+          <ConceptVideoSection topic="queue" />
+        </div>
         <Card className="p-8 bg-gradient-to-br from-primary/5 to-info/5 border-2">
           <h2 className="text-2xl font-bold mb-6 text-center">How AR-Teach 360 Works</h2>
           <div className="grid md:grid-cols-3 gap-8">
