@@ -22,6 +22,7 @@ interface ChapterContent {
   learning_objectives: string[];
   common_misconceptions: string[];
   lecture_notes: string | null;
+  pdf_url: string | null;
 }
 
 interface FacultyResearchContentProps {
@@ -33,11 +34,12 @@ const insightTypeConfig: Record<string, { label: string; icon: typeof Code }> = 
   case_study: { label: "Case Study", icon: BookOpen },
   research_note: { label: "Research Note", icon: FlaskConical },
   real_world_application: { label: "Real-World Application", icon: Lightbulb },
+  pdf_resource: { label: "PDF Resource", icon: FileText },
 };
 
 const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
   const [insights, setInsights] = useState<ResearchInsight[]>([]);
-  const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null);
+  const [chapterContents, setChapterContents] = useState<ChapterContent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -61,29 +63,31 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
         setInsights(insightsData || []);
       }
 
-      // Fetch faculty chapter content
+      // Fetch ALL faculty chapter content (not just one)
       const { data: chapterData, error: chapterError } = await supabase
         .from("chapter_content")
         .select("*")
         .eq("chapter_id", "arrays-stacks-queues")
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
 
       if (chapterError) {
         console.error("Error fetching chapter content:", chapterError);
-      } else if (chapterData) {
-        setChapterContent({
-          id: chapterData.id,
-          title: chapterData.title,
-          content: chapterData.content,
-          learning_objectives: Array.isArray(chapterData.learning_objectives) 
-            ? chapterData.learning_objectives as string[]
-            : [],
-          common_misconceptions: Array.isArray(chapterData.common_misconceptions)
-            ? chapterData.common_misconceptions as string[]
-            : [],
-          lecture_notes: chapterData.lecture_notes,
-        });
+      } else if (chapterData && chapterData.length > 0) {
+        setChapterContents(
+          chapterData.map((data) => ({
+            id: data.id,
+            title: data.title,
+            content: data.content,
+            learning_objectives: Array.isArray(data.learning_objectives) 
+              ? data.learning_objectives as string[]
+              : [],
+            common_misconceptions: Array.isArray(data.common_misconceptions)
+              ? data.common_misconceptions as string[]
+              : [],
+            lecture_notes: data.lecture_notes,
+            pdf_url: data.pdf_url,
+          }))
+        );
       }
     } catch (error) {
       console.error("Error fetching content:", error);
@@ -97,7 +101,13 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
     return config?.icon || FlaskConical;
   };
 
-  const hasContent = insights.length > 0 || chapterContent?.learning_objectives?.length || chapterContent?.lecture_notes;
+  // Aggregate all objectives and misconceptions from all faculty
+  const allObjectives = chapterContents.flatMap(c => c.learning_objectives);
+  const allMisconceptions = chapterContents.flatMap(c => c.common_misconceptions);
+  const allLectureNotes = chapterContents.filter(c => c.lecture_notes).map(c => ({ title: c.title, notes: c.lecture_notes! }));
+  const allPdfs = chapterContents.filter(c => c.pdf_url).map(c => ({ title: c.title, url: c.pdf_url! }));
+
+  const hasContent = insights.length > 0 || allObjectives.length > 0 || allLectureNotes.length > 0 || allPdfs.length > 0;
 
   if (isLoading) {
     return (
@@ -132,20 +142,20 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
       <CardContent className="space-y-4">
         <Accordion type="multiple" className="w-full">
           {/* Faculty Learning Objectives */}
-          {chapterContent?.learning_objectives && chapterContent.learning_objectives.length > 0 && (
+          {allObjectives.length > 0 && (
             <AccordionItem value="objectives">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-4 w-4 text-primary" />
                   <span>Learning Objectives</span>
                   <Badge variant="secondary" className="ml-2">
-                    {chapterContent.learning_objectives.length}
+                    {allObjectives.length}
                   </Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <ul className="space-y-2 pl-6">
-                  {chapterContent.learning_objectives.map((objective, idx) => (
+                  {allObjectives.map((objective, idx) => (
                     <li key={idx} className="text-sm text-muted-foreground list-disc">
                       {objective}
                     </li>
@@ -156,20 +166,61 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
           )}
 
           {/* Faculty Lecture Notes */}
-          {chapterContent?.lecture_notes && (
+          {allLectureNotes.length > 0 && (
             <AccordionItem value="lecture-notes">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-info" />
                   <span>Faculty Notes</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {allLectureNotes.length}
+                  </Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {chapterContent.lecture_notes.split("\n").map((paragraph, idx) => (
-                    <p key={idx} className="text-sm text-muted-foreground mb-2">
-                      {paragraph}
-                    </p>
+                <div className="space-y-4">
+                  {allLectureNotes.map((item, idx) => (
+                    <div key={idx} className="p-4 rounded-lg border border-border/50 bg-muted/30">
+                      <h4 className="font-medium text-foreground text-sm mb-2">{item.title}</h4>
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                        {item.notes.split("\n").map((paragraph, pIdx) => (
+                          <p key={pIdx} className="text-sm text-muted-foreground mb-2">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
+          {/* Faculty PDFs */}
+          {allPdfs.length > 0 && (
+            <AccordionItem value="faculty-pdfs">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <span>Course Materials (PDFs)</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {allPdfs.length}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2">
+                  {allPdfs.map((pdf, idx) => (
+                    <a
+                      key={idx}
+                      href={pdf.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors"
+                    >
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span className="text-sm text-foreground">{pdf.title}</span>
+                    </a>
                   ))}
                 </div>
               </AccordionContent>
@@ -177,7 +228,7 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
           )}
 
           {/* Common Misconceptions */}
-          {chapterContent?.common_misconceptions && chapterContent.common_misconceptions.length > 0 && (
+          {allMisconceptions.length > 0 && (
             <AccordionItem value="misconceptions">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-2">
@@ -190,7 +241,7 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
               </AccordionTrigger>
               <AccordionContent>
                 <ul className="space-y-2 pl-6">
-                  {chapterContent.common_misconceptions.map((misconception, idx) => (
+                  {allMisconceptions.map((misconception, idx) => (
                     <li key={idx} className="text-sm text-muted-foreground list-disc">
                       {misconception}
                     </li>
@@ -217,6 +268,7 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
                   {insights.map((insight) => {
                     const Icon = getInsightIcon(insight.insight_type);
                     const config = insightTypeConfig[insight.insight_type];
+                    const isPdf = insight.insight_type === "pdf_resource";
                     
                     return (
                       <div
@@ -241,7 +293,17 @@ const FacultyResearchContent = ({ conceptId }: FacultyResearchContentProps) => {
                                 </Badge>
                               )}
                             </div>
-                            {insight.insight_type === "code_snippet" ? (
+                            {isPdf ? (
+                              <a
+                                href={insight.content}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-2 text-sm text-primary hover:underline flex items-center gap-1"
+                              >
+                                <FileText className="h-3 w-3" />
+                                View PDF
+                              </a>
+                            ) : insight.insight_type === "code_snippet" ? (
                               <pre className="mt-2 p-3 bg-muted rounded-md overflow-x-auto text-xs">
                                 <code>{insight.content}</code>
                               </pre>
