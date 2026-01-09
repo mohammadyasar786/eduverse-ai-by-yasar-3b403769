@@ -71,26 +71,34 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert programming instructor creating quiz questions. Generate exactly ${numQuestions} multiple-choice questions about "${concept}" in the context of "${moduleName}".
+    const systemPrompt = `You are an expert programming instructor creating accurate quiz questions. Generate exactly ${numQuestions} multiple-choice questions about "${concept}" in the context of "${moduleName}".
+
+CRITICAL RULES:
+1. Each question MUST have exactly ONE correct answer
+2. The correctIndex MUST be the 0-based index of the correct answer in the options array
+3. DOUBLE CHECK that correctIndex matches the actual correct answer's position (0 = first option, 1 = second, 2 = third, 3 = fourth)
+4. The explanation MUST explain why the correct answer (the one at correctIndex) is right
+5. Make wrong options plausible but clearly incorrect to experts
 
 Each question must have:
-- A clear, specific question
-- Exactly 4 options (labeled A, B, C, D internally)
-- One correct answer
-- A brief explanation of why the correct answer is right
+- A clear, specific, factually accurate question
+- Exactly 4 options where only ONE is correct
+- correctIndex: the 0-based index (0, 1, 2, or 3) of the correct answer
+- A brief explanation confirming why the answer at correctIndex is correct
 
 Return ONLY valid JSON in this exact format:
 {
   "questions": [
     {
-      "question": "The question text?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "question": "What is the time complexity of accessing an element by index in an array?",
+      "options": ["O(1)", "O(n)", "O(log n)", "O(n²)"],
       "correctIndex": 0,
-      "explanation": "Brief explanation of the correct answer"
+      "explanation": "Array index access is O(1) because elements are stored in contiguous memory, allowing direct address calculation."
     }
   ]
 }
 
+VERIFICATION: Before returning, verify each correctIndex by counting: options[0] is first, options[1] is second, etc.
 Make questions progressively harder. Focus on practical understanding, not just memorization.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -103,7 +111,7 @@ Make questions progressively harder. Focus on practical understanding, not just 
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Create ${numQuestions} quiz questions about "${concept}" for someone learning ${moduleName}.` }
+          { role: "user", content: `Create ${numQuestions} accurate quiz questions about "${concept}" for someone learning ${moduleName}. Remember: correctIndex must be 0-based (0=first option, 1=second, 2=third, 3=fourth). Verify each answer is correct before returning.` }
         ],
       }),
     });
@@ -129,6 +137,27 @@ Make questions progressively harder. Focus on practical understanding, not just 
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         questions = parsed.questions;
+        
+        // Validate and fix correctIndex values
+        questions = questions.map((q: any, idx: number) => {
+          // Ensure correctIndex is a valid number between 0-3
+          let correctIndex = typeof q.correctIndex === 'number' ? q.correctIndex : parseInt(q.correctIndex, 10);
+          if (isNaN(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+            console.warn(`Question ${idx + 1} has invalid correctIndex: ${q.correctIndex}, defaulting to 0`);
+            correctIndex = 0;
+          }
+          // Ensure options array has exactly 4 items
+          const options = Array.isArray(q.options) && q.options.length === 4 
+            ? q.options 
+            : ["Option A", "Option B", "Option C", "Option D"];
+          
+          return {
+            question: q.question || "Question not available",
+            options,
+            correctIndex,
+            explanation: q.explanation || "No explanation available"
+          };
+        });
       } else {
         throw new Error("No JSON found in response");
       }
