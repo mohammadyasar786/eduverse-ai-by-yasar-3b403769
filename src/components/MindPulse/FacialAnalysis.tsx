@@ -47,6 +47,11 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   const recentResultsRef = useRef<AnalysisResult[]>([]);
   const MAX_RESULTS_FOR_AVERAGE = 5;
 
+  // Reduce false "No face" warnings by requiring a short streak of misses
+  const noFaceStreakRef = useRef(0);
+  const multiFaceStreakRef = useRef(0);
+  const REQUIRED_STREAK = 3;
+
   // Cleanup function
   const cleanup = useCallback(() => {
     // Stop analysis interval
@@ -76,6 +81,8 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
     setFaceDetectionStatus("detecting");
     setAnalysisMessage(null);
     recentResultsRef.current = [];
+    noFaceStreakRef.current = 0;
+    multiFaceStreakRef.current = 0;
   }, []);
 
   // Cleanup on unmount
@@ -138,21 +145,50 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
       
       if (!result || !isMountedRef.current) return;
 
-      if (result.faceCount === 0) {
-        setFaceDetectionStatus("no_face");
-        setAnalysisMessage("No face detected. Please face the camera.");
-        return;
-      }
-      
-      if (result.faceCount > 1) {
-        setFaceDetectionStatus("multiple_faces");
-        setAnalysisMessage("Multiple faces detected. Analysis works best with one person.");
-        return;
-      }
-      
-      // Face found - update state
-      setFaceDetectionStatus("found");
-      setAnalysisMessage(null);
+       if (result.faceCount === 0) {
+         noFaceStreakRef.current += 1;
+         multiFaceStreakRef.current = 0;
+
+         // Avoid flashing "no face" due to occasional missed frames
+         if (noFaceStreakRef.current < REQUIRED_STREAK) return;
+
+         console.debug("[MindPulse] No face detected", {
+           streak: noFaceStreakRef.current,
+           video: {
+             width: videoRef.current?.videoWidth,
+             height: videoRef.current?.videoHeight,
+             readyState: videoRef.current?.readyState,
+           },
+         });
+
+         setFaceDetectionStatus("no_face");
+         setAnalysisMessage("No face detected. Please face the camera.");
+         return;
+       }
+
+       if (result.faceCount > 1) {
+         multiFaceStreakRef.current += 1;
+         noFaceStreakRef.current = 0;
+
+         if (multiFaceStreakRef.current < REQUIRED_STREAK) return;
+
+         console.debug("[MindPulse] Multiple faces detected", {
+           streak: multiFaceStreakRef.current,
+           faceCount: result.faceCount,
+         });
+
+         setFaceDetectionStatus("multiple_faces");
+         setAnalysisMessage("Multiple faces detected. Analysis works best with one person.");
+         return;
+       }
+
+       // Reset streaks once exactly one face is detected
+       noFaceStreakRef.current = 0;
+       multiFaceStreakRef.current = 0;
+       
+       // Face found - update state
+       setFaceDetectionStatus("found");
+       setAnalysisMessage(null);
       
       // Add to recent results for averaging
       recentResultsRef.current.push({ focus: result.focusState, timestamp: Date.now() });
@@ -222,13 +258,14 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
         throw new Error("Camera not supported on this device.");
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "user", 
-          width: { ideal: 640, min: 480 }, 
-          height: { ideal: 480, min: 360 } 
-        } 
-      });
+       const stream = await navigator.mediaDevices.getUserMedia({ 
+         video: { 
+           facingMode: "user", 
+           width: { ideal: 640, min: 480 }, 
+           height: { ideal: 480, min: 360 },
+           frameRate: { ideal: 30, min: 15 }
+         } 
+       });
       
       if (!isMountedRef.current) {
         // Component unmounted during request - cleanup

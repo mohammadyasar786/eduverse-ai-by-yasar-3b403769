@@ -1,6 +1,5 @@
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
-import "@tensorflow/tfjs-core";
-import "@tensorflow/tfjs-backend-webgl";
+import { ensureTfjsBackendReady } from "@/lib/tfjs/ensureBackend";
 
 type FocusState = "focused" | "neutral" | "stressed";
 
@@ -58,6 +57,8 @@ export async function initializeDetector(): Promise<faceLandmarksDetection.FaceL
   isInitializing = true;
 
   try {
+    await ensureTfjsBackendReady();
+
     const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
     detector = await faceLandmarksDetection.createDetector(model, {
       runtime: "tfjs",
