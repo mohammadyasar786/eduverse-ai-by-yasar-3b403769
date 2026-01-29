@@ -235,9 +235,9 @@ const ConceptQuiz = ({ concept, moduleName, onComplete, onBack }: ConceptQuizPro
       case "conceptual":
         return <Badge variant="secondary" className="text-xs">Conceptual</Badge>;
       case "scenario":
-        return <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-200">Scenario</Badge>;
+        return <Badge variant="outline" className="text-xs bg-accent/20 text-foreground border-border">Scenario</Badge>;
       case "code":
-        return <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-200">Code</Badge>;
+        return <Badge variant="outline" className="text-xs bg-secondary/20 text-foreground border-border">Code</Badge>;
       default:
         return null;
     }
