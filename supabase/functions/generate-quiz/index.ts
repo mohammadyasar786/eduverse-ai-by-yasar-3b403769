@@ -12,6 +12,9 @@ const quizRequestSchema = z.object({
   concept: z.string().min(1).max(200),
   moduleName: z.string().min(1).max(200),
   numQuestions: z.number().int().min(1).max(10).default(5),
+  difficulty: z.enum(["beginner", "intermediate", "advanced"]).default("intermediate"),
+  attemptNumber: z.number().int().min(1).default(1),
+  previousQuestions: z.array(z.string()).default([]),
 });
 
 async function authenticateRequest(req: Request) {
@@ -62,29 +65,70 @@ serve(async (req) => {
       );
     }
 
-    const { concept, moduleName, numQuestions } = validationResult.data;
+    const { concept, moduleName, numQuestions, difficulty, attemptNumber, previousQuestions } = validationResult.data;
     
-    console.log(`Generating quiz for user ${user.id}: ${concept}, module: ${moduleName}`);
+    // Generate unique seed for this request
+    const timestamp = new Date().toISOString();
+    const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    
+    console.log(`Generating quiz for user ${user.id}: ${concept}, module: ${moduleName}, difficulty: ${difficulty}, attempt: ${attemptNumber}, seed: ${uniqueSeed}`);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert programming instructor creating accurate quiz questions. Generate exactly ${numQuestions} multiple-choice questions about "${concept}" in the context of "${moduleName}".
+    // Build previous questions context to avoid repetition
+    const previousQuestionsContext = previousQuestions.length > 0 
+      ? `\n\nIMPORTANT - DO NOT REPEAT THESE QUESTIONS:\n${previousQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nCreate completely NEW and DIFFERENT questions that test the same concepts from different angles.`
+      : '';
+
+    // Difficulty-specific instructions
+    const difficultyGuide = {
+      beginner: "Focus on basic definitions, simple syntax, and fundamental concepts. Use straightforward examples.",
+      intermediate: "Include application-level questions, common use cases, and require understanding of how concepts work together.",
+      advanced: "Challenge with edge cases, optimization scenarios, complex problem-solving, and deep understanding of underlying mechanisms."
+    };
+
+    // Question style distribution
+    const questionStyles = `
+Generate a MIX of these question types (distribute across all ${numQuestions} questions):
+1. CONCEPTUAL MCQs (${Math.ceil(numQuestions * 0.4)} questions): Test understanding of definitions, properties, and characteristics
+2. SCENARIO-BASED (${Math.ceil(numQuestions * 0.3)} questions): Present real-world situations requiring application of knowledge
+3. CODE OUTPUT (${Math.floor(numQuestions * 0.3)} questions): Show code snippets and ask what the output or result would be`;
+
+    const systemPrompt = `You are an expert programming instructor creating UNIQUE quiz questions. 
+
+GENERATION CONTEXT (use this to ensure uniqueness):
+- Timestamp: ${timestamp}
+- Unique Seed: ${uniqueSeed}
+- Attempt Number: ${attemptNumber}
+- Difficulty Level: ${difficulty}
+
+Generate exactly ${numQuestions} FRESH multiple-choice questions about "${concept}" in the context of "${moduleName}".
+
+DIFFICULTY LEVEL (${difficulty.toUpperCase()}):
+${difficultyGuide[difficulty]}
+
+${questionStyles}
 
 CRITICAL RULES:
-1. Each question MUST have exactly ONE correct answer
-2. The correctIndex MUST be the 0-based index of the correct answer in the options array
-3. DOUBLE CHECK that correctIndex matches the actual correct answer's position (0 = first option, 1 = second, 2 = third, 3 = fourth)
-4. The explanation MUST explain why the correct answer (the one at correctIndex) is right
-5. Make wrong options plausible but clearly incorrect to experts
+1. Each question MUST be UNIQUE and DIFFERENT from any previous attempts
+2. Each question MUST have exactly ONE correct answer
+3. The correctIndex MUST be the 0-based index of the correct answer in the options array (0, 1, 2, or 3)
+4. DOUBLE CHECK that correctIndex matches the actual correct answer's position
+5. The explanation MUST explain why the answer at correctIndex is correct
+6. Make wrong options plausible but clearly incorrect to experts
+7. VARY the position of correct answers (don't always put correct answer in same position)
+8. Include the question type in a "type" field: "conceptual", "scenario", or "code"
+${previousQuestionsContext}
 
-Each question must have:
-- A clear, specific, factually accurate question
-- Exactly 4 options where only ONE is correct
-- correctIndex: the 0-based index (0, 1, 2, or 3) of the correct answer
-- A brief explanation confirming why the answer at correctIndex is correct
+IMPORTANT FOR UNIQUENESS:
+- Use different angles to test the same concept
+- Vary question phrasing and structure
+- Use different examples and scenarios
+- For code questions, use different variable names and values each time
+- Reference the unique seed ${uniqueSeed} to inspire variation
 
 Return ONLY valid JSON in this exact format:
 {
@@ -93,13 +137,31 @@ Return ONLY valid JSON in this exact format:
       "question": "What is the time complexity of accessing an element by index in an array?",
       "options": ["O(1)", "O(n)", "O(log n)", "O(n²)"],
       "correctIndex": 0,
-      "explanation": "Array index access is O(1) because elements are stored in contiguous memory, allowing direct address calculation."
+      "explanation": "Array index access is O(1) because elements are stored in contiguous memory, allowing direct address calculation.",
+      "type": "conceptual"
+    },
+    {
+      "question": "A web application needs to manage a list of recently viewed items where users can add new items and remove the oldest one when the limit is reached. Which data structure is most appropriate?",
+      "options": ["Stack", "Queue", "Binary Tree", "Hash Map"],
+      "correctIndex": 1,
+      "explanation": "A Queue (FIFO - First In, First Out) is ideal for this scenario because it allows adding new items at the end and removing the oldest items from the front.",
+      "type": "scenario"
+    },
+    {
+      "question": "What will be the output of the following code?\\narr = [10, 20, 30, 40]\\nprint(arr[2])",
+      "options": ["10", "20", "30", "40"],
+      "correctIndex": 2,
+      "explanation": "Array indexing starts at 0, so arr[2] accesses the third element, which is 30.",
+      "type": "code"
     }
   ]
 }
 
-VERIFICATION: Before returning, verify each correctIndex by counting: options[0] is first, options[1] is second, etc.
-Make questions progressively harder. Focus on practical understanding, not just memorization.`;
+VERIFICATION: Before returning, verify:
+1. Each correctIndex is valid (0-3) and matches the correct answer
+2. All questions are NEW and not repeated
+3. Question types are mixed as specified
+4. Difficulty matches ${difficulty} level`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -111,8 +173,9 @@ Make questions progressively harder. Focus on practical understanding, not just 
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Create ${numQuestions} accurate quiz questions about "${concept}" for someone learning ${moduleName}. Remember: correctIndex must be 0-based (0=first option, 1=second, 2=third, 3=fourth). Verify each answer is correct before returning.` }
+          { role: "user", content: `Create ${numQuestions} BRAND NEW ${difficulty}-level quiz questions about "${concept}" for someone learning ${moduleName}. This is attempt #${attemptNumber}, so generate completely fresh questions. Use seed ${uniqueSeed} to ensure uniqueness. Remember: correctIndex must be 0-based (0=first option, 1=second, 2=third, 3=fourth). Mix question types: conceptual, scenario-based, and code output. Verify each answer is correct before returning.` }
         ],
+        temperature: 0.9, // Higher temperature for more variety
       }),
     });
 
@@ -155,7 +218,8 @@ Make questions progressively harder. Focus on practical understanding, not just 
             question: q.question || "Question not available",
             options,
             correctIndex,
-            explanation: q.explanation || "No explanation available"
+            explanation: q.explanation || "No explanation available",
+            type: q.type || "conceptual"
           };
         });
       } else {
@@ -166,9 +230,17 @@ Make questions progressively harder. Focus on practical understanding, not just 
       throw new Error("Failed to parse quiz questions");
     }
 
-    console.log(`Successfully generated ${questions.length} questions`);
+    console.log(`Successfully generated ${questions.length} unique questions for attempt ${attemptNumber}`);
 
-    return new Response(JSON.stringify({ questions }), {
+    return new Response(JSON.stringify({ 
+      questions,
+      metadata: {
+        attempt: attemptNumber,
+        difficulty,
+        timestamp,
+        uniqueSeed
+      }
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
