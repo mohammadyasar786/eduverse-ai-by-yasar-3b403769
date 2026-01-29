@@ -4,8 +4,98 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function extractJsonFromModelOutput(content: string): string | null {
+  // 1) Prefer fenced JSON blocks
+  const fencedJson = content.match(/```json\s*([\s\S]*?)\s*```/i);
+  if (fencedJson?.[1]) return fencedJson[1].trim();
+
+  const fencedAny = content.match(/```\s*([\s\S]*?)\s*```/i);
+  if (fencedAny?.[1] && fencedAny[1].includes("{") && fencedAny[1].includes("}")) {
+    return fencedAny[1].trim();
+  }
+
+  // 2) Fallback: extract first balanced JSON object (handles extra commentary)
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i];
+
+    if (escape) {
+      escape = false;
+      continue;
+    }
+
+    if (ch === "\\" && inString) {
+      escape = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (ch === "{") {
+      if (start === -1) start = i;
+      depth++;
+      continue;
+    }
+    if (ch === "}") {
+      if (start === -1) continue;
+      depth--;
+      if (depth === 0) {
+        return content.slice(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
+async function callGateway(args: {
+  systemPrompt: string;
+  userPrompt: string;
+  temperature: number;
+}): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: args.systemPrompt },
+        { role: "user", content: args.userPrompt },
+      ],
+      temperature: args.temperature,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("AI gateway error:", response.status, errorText);
+    throw new Error(`AI gateway error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("No content in AI response");
+  return content;
+}
 
 // Input validation schema
 const quizRequestSchema = z.object({
@@ -72,11 +162,6 @@ serve(async (req) => {
     const uniqueSeed = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
     
     console.log(`Generating quiz for user ${user.id}: ${concept}, module: ${moduleName}, difficulty: ${difficulty}, attempt: ${attemptNumber}, seed: ${uniqueSeed}`);
-
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
 
     // Build previous questions context to avoid repetition
     const previousQuestionsContext = previousQuestions.length > 0 
@@ -163,42 +248,38 @@ VERIFICATION: Before returning, verify:
 3. Question types are mixed as specified
 4. Difficulty matches ${difficulty} level`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Create ${numQuestions} BRAND NEW ${difficulty}-level quiz questions about "${concept}" for someone learning ${moduleName}. This is attempt #${attemptNumber}, so generate completely fresh questions. Use seed ${uniqueSeed} to ensure uniqueness. Remember: correctIndex must be 0-based (0=first option, 1=second, 2=third, 3=fourth). Mix question types: conceptual, scenario-based, and code output. Verify each answer is correct before returning.` }
-        ],
-        temperature: 0.9, // Higher temperature for more variety
-      }),
-    });
+    const userPrompt = `Create ${numQuestions} BRAND NEW ${difficulty}-level quiz questions about "${concept}" for someone learning ${moduleName}. This is attempt #${attemptNumber}, so generate completely fresh questions. Use seed ${uniqueSeed} to ensure uniqueness. Remember: correctIndex must be 0-based (0=first option, 1=second, 2=third, 3=fourth). Mix question types: conceptual, scenario-based, and code output. Verify each answer is correct before returning.`;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
+    // First attempt: higher temperature for variety
+    let content = await callGateway({ systemPrompt, userPrompt, temperature: 0.9 });
 
     // Parse the JSON from the response
     let questions;
     try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+      const extracted = extractJsonFromModelOutput(content);
+      if (extracted) {
+        let parsed: any;
+        try {
+          parsed = JSON.parse(extracted);
+        } catch (e) {
+          console.warn("First parse attempt failed; retrying with stricter JSON request.", e);
+
+          const strictSystemPrompt = systemPrompt +
+            "\n\nSTRICT OUTPUT RULE: Return ONLY raw JSON (no markdown, no code fences, no trailing commentary, no leading text).";
+          const strictUserPrompt = userPrompt +
+            "\n\nReturn ONLY raw JSON. Do not wrap in ```json``` and do not include any extra text.";
+
+          content = await callGateway({
+            systemPrompt: strictSystemPrompt,
+            userPrompt: strictUserPrompt,
+            temperature: 0.2,
+          });
+
+          const extractedRetry = extractJsonFromModelOutput(content);
+          if (!extractedRetry) throw new Error("No JSON found in retry response");
+          parsed = JSON.parse(extractedRetry);
+        }
+
         questions = parsed.questions;
         
         // Validate and fix correctIndex values
