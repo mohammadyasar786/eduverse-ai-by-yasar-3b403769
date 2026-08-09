@@ -164,6 +164,10 @@ const Auth = () => {
             </div>
           )}
           
+          <h1 className="text-2xl font-bold">
+            {isLogin ? "Sign In to EduVerse" : "Create Your EduVerse Account"}
+          </h1>
+
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back! Continue your learning journey." : "Join the future of personalized education."}
           </p>

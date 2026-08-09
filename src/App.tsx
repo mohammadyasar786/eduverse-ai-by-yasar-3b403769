@@ -20,6 +20,7 @@ import ResearchDashboardPage from "./pages/ResearchDashboardPage";
 import NotFound from "./pages/NotFound";
 import ProgressBoard from "./pages/ProgressBoard";
 import OAuthConsent from "./pages/OAuthConsent";
+import RouteSeo from "@/components/RouteSeo";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <RouteSeo />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/select-role" element={<RoleSelection />} />

@@ -286,7 +286,7 @@ const AITutor = () => {
             handleSend();
           }} className="flex gap-2">
               <Input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask me anything..." className="flex-1" disabled={isLoading} />
-              <Button type="submit" size="icon" disabled={!input.trim() || isLoading} className="gradient-primary text-primary-foreground shadow-primary rounded-3xl">
+              <Button type="submit" size="icon" aria-label="Send message" disabled={!input.trim() || isLoading} className="gradient-primary text-primary-foreground shadow-primary rounded-3xl">
                 <Send className="h-4 w-4" />
               </Button>
             </form>
