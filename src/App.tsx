@@ -19,6 +19,7 @@ import FacultyDashboardPage from "./pages/FacultyDashboardPage";
 import ResearchDashboardPage from "./pages/ResearchDashboardPage";
 import NotFound from "./pages/NotFound";
 import ProgressBoard from "./pages/ProgressBoard";
+import OAuthConsent from "./pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/learnflow" element={<LearnFlow />} />
             <Route path="/adaptive-learning" element={<AdaptiveLearning />} />
             <Route path="/progress-board" element={<ProgressBoard />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
