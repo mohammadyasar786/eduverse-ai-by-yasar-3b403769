@@ -117,7 +117,7 @@ const Talk2Code = () => {
               <div className="space-y-4">
                 <div className="relative">
                   <Textarea value={instruction} onChange={e => setInstruction(e.target.value)} placeholder="Describe what you want to code... (e.g., 'Create a function that reverses a string')" className="min-h-[150px] resize-none" />
-                  <Button size="icon" variant={isRecording ? "destructive" : "ghost"} className={`absolute bottom-2 right-2 ${isRecording ? "animate-pulse" : ""}`} onClick={toggleRecording} disabled={isProcessing}>
+                  <Button size="icon" aria-label={isRecording ? "Stop recording" : "Start voice recording"} variant={isRecording ? "destructive" : "ghost"} className={`absolute bottom-2 right-2 ${isRecording ? "animate-pulse" : ""}`} onClick={toggleRecording} disabled={isProcessing}>
                     {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                   </Button>
                   {isRecording && <div className="absolute top-2 right-2 flex items-center gap-2 text-xs text-destructive font-medium">

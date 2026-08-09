@@ -266,7 +266,7 @@ const ProgressBoard = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" aria-label="Go back" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
@@ -282,10 +282,10 @@ const ProgressBoard = () => {
         {showSettings && (
           <Card className="mb-6 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
             <CardContent className="pt-6">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
                 <EyeOff className="h-4 w-4" />
                 Privacy Settings
-              </h3>
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
