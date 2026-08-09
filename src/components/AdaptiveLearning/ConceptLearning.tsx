@@ -48,7 +48,7 @@ const ConceptLearning = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showPractice, setShowPractice] = useState(false);
   const [timeSpent, setTimeSpent] = useState(progress?.timeSpent || 0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { speak, isSpeaking, stop } = useTextToSpeech();
 
   const concept = conceptData[conceptId];
