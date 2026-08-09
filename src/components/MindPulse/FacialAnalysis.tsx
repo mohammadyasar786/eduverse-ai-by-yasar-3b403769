@@ -40,7 +40,7 @@ const FacialAnalysis = ({ onFocusUpdate, isMonitoring }: FacialAnalysisProps) =>
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const analysisIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
   
   // Store recent analysis results for averaging

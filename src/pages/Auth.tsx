@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,12 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const { role, isLoading: roleLoading, setUserRole } = useUserRole();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Preserve an intended same-origin destination (e.g. the OAuth consent page)
+  const nextParam = searchParams.get("next");
+  const safeNext =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
 
   // Get pending role from sessionStorage (set during role selection)
   const pendingRole = sessionStorage.getItem("pendingRole") as AppRole | null;
@@ -41,6 +47,10 @@ const Auth = () => {
   // Redirect authenticated users based on their role
   useEffect(() => {
     if (user && !roleLoading) {
+      if (safeNext) {
+        window.location.href = safeNext;
+        return;
+      }
       if (role) {
         // User has a role, redirect to appropriate dashboard
         redirectToRoleDashboard(role);
@@ -57,7 +67,7 @@ const Auth = () => {
         navigate("/select-role");
       }
     }
-  }, [user, role, roleLoading, pendingRole]);
+  }, [user, role, roleLoading, pendingRole, safeNext]);
 
   const redirectToRoleDashboard = (userRole: AppRole) => {
     switch (userRole) {
