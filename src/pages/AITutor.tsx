@@ -86,11 +86,18 @@ const AITutor = () => {
     setIsLoading(true);
     let assistantContent = "";
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast.error("Your session expired. Please sign in again.");
+        navigate("/auth");
+        return;
+      }
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           messages: [...messages.slice(1), userMsg].map(m => ({
